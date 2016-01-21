@@ -17,7 +17,11 @@ serialport.on('open', function () {
     startXbmq();
 });
 
-xbeeAPI.on('frame_object', function publishFrame(frame) {    
+serialport.on('error', function (error) {
+    console.log(error);
+});
+
+xbeeAPI.on('frame_object', function publishFrame(frame) {
     if (xbmq) {
         xbmq.publishXBeeFrame(frame);
     }
@@ -26,10 +30,15 @@ xbeeAPI.on('frame_object', function publishFrame(frame) {
 /**
  * Send a frame to the XBee network.  Intended to be used as a callback when
  * MQTT receives new messages.
+ * @param {type} error
  * @param {type} frame xbee-api frame 
  */
-function mqttCommand(frame) {
-    serialport.write(xbeeAPI.buildFrame(frame));
+function xbmqCallback(error, frame) {
+    if (error) {
+        console.log(error);
+    } else {
+        serialport.write(xbeeAPI.buildFrame(frame));
+    }
 }
 
 /*
@@ -39,7 +48,7 @@ function startXbmq() {
     getGatewayAddress().then(function (address) {
         rootTopic = 'ab123/' + address;
         console.log('rootTopic: ' + rootTopic);
-        xbmq = new Xbmq('mqtt://fona.ziptrek.eco', rootTopic, mqttCommand);
+        xbmq = new Xbmq('mqtt://fona.ziptrek.eco', rootTopic, xbmqCallback);
     });
 }
 

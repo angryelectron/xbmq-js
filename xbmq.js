@@ -37,22 +37,22 @@ module.exports = function (broker, rootTopic, receivedMessageCallback) {
     mqtt.on('connect', function () {
         console.log("MQTT connected.");
         mqttIsOnline(true);
-        mqtt.subscribe(rootTopic + '/request');
+        mqtt.subscribe(rootTopic + '/request'); //TODO: do subscriptions survive a reconnect?
     });
 
     mqtt.on('error', function (error) {
         console.log(error);
     });
 
-    mqtt.on('message', function (topic, message, packet) {
+    mqtt.on('message', function (topic, message) {
         console.log('Received: ' + topic + ': ' + message);        
         try {
             var frame = JSON.parse(message);
-            receiveMessageCallback(frame);
+            receivedMessageCallback(frame);
         } catch (error) {
-            console.log(error);
+            return receivedMessageCallback(error, message);
         }
-        
+        return receivedMessageCallback(null, frame);
     });
 
     function publishXBeeFrame(frame) {
