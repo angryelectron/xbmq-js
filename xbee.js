@@ -1,56 +1,72 @@
 var q = require('q');
-var util = require('util');
-var Xbmq = require('./xbmq');
 var SerialPort = require('serialport').SerialPort;
 var xbee_api = require('xbee-api');
 
-var xbmq = null;
+module.exports = {
+    begin: begin,
+    getLocalAddress: getLocalAddress,
+    transmitMqttMessage: transmitMqttMessage
+};
+
+var serialport;
 var C = xbee_api.constants;
 var xbeeAPI = new xbee_api.XBeeAPI({api_mode: 2});
-var serialport = new SerialPort('/dev/ttyUSB0', {
-    baudrate: 9600,
-    parser: xbeeAPI.rawParser()
-});
 
-serialport.on('open', function () {
-    console.log('Serial Port Open');
-    startXbmq();
-});
+function begin(port, baud, readyCallback, messageCallback) {
+    serialport = new SerialPort(port, {
+        baudrate: baud,
+        parser: xbeeAPI.rawParser()
+    });
 
-serialport.on('error', function (error) {
-    console.log(error);
-});
+    serialport.on('open', function () {
+        console.log('Serial Port Open');
+        readyCallback();
+    });
 
-xbeeAPI.on('frame_object', function publishFrame(frame) {
-    if (xbmq) {
-        xbmq.publishXBeeFrame(frame);
-    }
-});
-
-/**
- * Send a frame to the XBee network.  Intended to be used as a callback when
- * MQTT receives new messages.
- * @param {type} error
- * @param {type} frame xbee-api frame 
- */
-function xbmqCallback(error, frame) {
-    if (error) {
+    serialport.on('error', function (error) {
         console.log(error);
-    } else {
-        serialport.write(xbeeAPI.buildFrame(frame));
-    }
-}
+        messageCallback(error, null);
+    });
 
-/*
- * Start XBMQ 
- */
-function startXbmq() {
-    getGatewayAddress().then(function (address) {
-        rootTopic = 'ab123/' + address;
-        console.log('rootTopic: ' + rootTopic);
-        xbmq = new Xbmq('mqtt://fona.ziptrek.eco', rootTopic, xbmqCallback);
+    xbeeAPI.on('frame_object', function (frame) {
+        messageCallback(null, frame);
+    });
+
+    xbeeAPI.on('error', function (error) {
+        messageCallback(error, null);
     });
 }
+
+function transmitMqttMessage(message) {
+                    
+    try {
+        var frame = JSON.parse(message);
+        
+        /*
+         * JSON doesn't support hex numbers.  If a hex string was sent,
+         * convert it to an integer.
+         */
+        if (typeof frame.type === 'string') {
+            frame.type = parseInt(frame.type);
+        }        
+        if (typeof frame.id === 'string') {
+            frame.id = parseInt(frame.id);
+        }
+        
+        /*
+         * If the sender doesn't include a commandParameter array, add it for
+         * them.  This is for convenience, as many commands don't take parameters.
+         */
+        if (!frame.commandParameter) {
+            frame.commandParameter = [];
+        }
+        
+        serialport.write(xbeeAPI.buildFrame(frame));
+    } catch (error) {        
+        xbeeAPI.emit('error', error);
+    }
+}
+
 
 /*
  * Send an XBee request and return a promise fulfilled with the response.
@@ -77,10 +93,9 @@ function xbeeCommand(frame) {
 }
 
 /**
- * Return a promise that resolves with the 64-bit address of the local XBee 
- * attached to this gateway.
+ * Return a promise that resolves with the 64-bit address of the local XBee.
  */
-function getGatewayAddress() {
+function getLocalAddress() {
     var gw = null;
     var frame = {
         type: C.FRAME_TYPE.AT_COMMAND,

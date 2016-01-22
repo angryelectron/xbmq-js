@@ -24,6 +24,12 @@
     "xbee-api": "^0.4.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node xbmq.js",
+    "test": "mocha"
+    
+  },
+  "devDependencies": {
+    "mocha": "^2.3.4",    
+    "sinon": "^1.17.2"
   }
 }
