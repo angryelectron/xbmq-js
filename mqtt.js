@@ -71,7 +71,7 @@ function mqttIsOnline(isOnline) {
  * Send an XBee frame as an MQTT message.
  */
 function publishXBeeFrame(frame) {
-    var topic = rootTopic + '/response';
+    var topic = rootTopic + "/" + frame.remote64 + '/response';
     var message = JSON.stringify(frame);
     
     /* may be called before MQTT is connected, 

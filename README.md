@@ -31,11 +31,11 @@ rootTopic/gatewayAddress/Online
 Messages are published to this topic by the gateway to indicate the gateway's
 online status.  1=online, 0=offline. 
 
-rootTopic/gatewayAddress/response
+rootTopic/gatewayAddress/xbeeAddress/response
 -----------------------------------------------------------
-Messages from the XBee network are published to this topic.  The response is a
-JSON object representing an [xbee-api](https://www.npmjs.com/package/xbee-api)
-frame.
+Messages from the XBee radio with address `xbeeAddress` are published to this 
+topic.  The response is a JSON object representing an 
+[xbee-api](https://www.npmjs.com/package/xbee-api) frame.
 
 rootTopic/gatewayAddress/request
 --------------------------------
