@@ -26,27 +26,41 @@ All MQTT messages (to and from the XBee network) are published to subtopics of
 `rootTopic/gatewayAddress`, where `rootTopic` is defined in xbmq.js 
 and `gatewayAddress` is the 64-bit address of the local XBee.
 
-rootTopic/gatewayAddress/Online
--------------------------------
+Topic: rootTopic/gatewayAddress/Online
+--------------------------------------
+Message Type: String
+Message Value: "1" for online, "0" for offline
+
 Messages are published to this topic by the gateway to indicate the gateway's
-online status.  1=online, 0=offline. 
+online status.  
 
-rootTopic/gatewayAddress/xbeeAddress/response
------------------------------------------------------------
+Topic: rootTopic/gatewayAddress/xbeeAddress/response
+-----------------------------------------------------
+Message Type: JSON string
+Message Value: An [xbee-api](https://www.npmjs.com/package/xbee-api) frame
+
 Messages from the XBee radio with address `xbeeAddress` are published to this 
-topic.  The response is a JSON object representing an 
-[xbee-api](https://www.npmjs.com/package/xbee-api) frame.
+topic. 
 
-rootTopic/gatewayAddress/request
---------------------------------
+Topic: rootTopic/gatewayAddress/request
+---------------------------------------
+Message Type: JSON string
+Message Value: An [xbee-api](https://www.npmjs.com/package/xbee-api) frame
+
 Mqtt clients can publish to this topic to issue commands on the XBee network.
-The message should be a JSON object as defined by the xbee-api.
-
 Because JSON does not support hexadecimal numbers, `type` and `id` must be
-passed in decimal or as hedecimal strings (ie. 16, "0x10").
+passed in decimal or as hedecimal strings (ie. 16, "0x10").  Also, since many 
+XBee commands don't require a commandParameter, it can be omitted from the 
+message if desired.
 
-Since many XBee commands don't require a commandParameter, it can be omitted
-from the message if desired.
+Tips for Using with MQTT Clients
+=========================================
 
-For more details about xbee-api commands, please see the
-[xbee-api](https://www.npmjs.com/package/xbee-api).
+MQTT (Node.js)
+* Call JSON.parse(message) on messages received from the `request` topic.
+* Call message.toString() on messages received from the `log` topic.
+* Call JSON.stringify(message) on XBee frame objects before publishing.
+
+Node-Red
+* Connect a JSON node to the output of the MQTT node that is subscribed to the
+`request` topic.
