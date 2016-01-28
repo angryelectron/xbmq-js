@@ -1,6 +1,7 @@
 var xbee = require('./xbee');
 var mqtt = require('./mqtt');
 
+
 /*
  * User-configurable settings.
  * TODO: read these from the command line.
@@ -8,7 +9,7 @@ var mqtt = require('./mqtt');
 var rootTopic = 'ab123';
 var broker = 'mqtt://192.168.2.41';
 var port = '/dev/ttyUSB0';
-var baud = '9600';
+var baud = 9600;
 
 /*
  * Global variables
@@ -37,28 +38,40 @@ function beginMqtt() {
 }
 
 function whenMqttMessageReceived(error, topic, message) {
+        
     if (error) {
         console.log(error);
         mqtt.publishLog(error);
         return;
     }
-    
-    //Currently the only subscribed topic is 'request', but
-    //other topics may be suppored in the future;
-    
-    xbee.transmitMqttMessage(message);
+
+    try {
+        xbee.transmitMqttMessage(message);
+    } catch(error) {
+        console.log(error);
+        mqtt.publishLog(error);
+    }
 }
 
 function whenXBeeMessageReceived(error, frame) {
     if (error) {
         console.log(error);
         mqtt.publishLog(error);
-    } else {
+        return;
+    }
+
+    try {
         mqtt.publishXBeeFrame(frame);
+    } catch (error) {
+        if (!error instanceof ReferenceError) {
+            console.log(error);
+        }
     }
 }
+
 
 module.exports = {
     whenMqttMessageReceived: whenMqttMessageReceived,
     whenXBeeMessageReceived: whenXBeeMessageReceived
-};
+}
+;

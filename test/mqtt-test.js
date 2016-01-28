@@ -1,10 +1,10 @@
 var mqtt = require('../mqtt');
 var expect = require('chai').expect;
 
-describe('mqtt tests', function () {
+describe('mqtt.js', function () {
 
-    var broker = 'mqtt://test.mosquitto.org';
-    var rootTopic = 'sdf987sdlk3jdjd';
+    var broker = 'mqtt://test.mosquitto.org';   /* public MQTT broker */
+    var rootTopic = 'sdf987sdlk3jdjd';          /* random string */
     var Mqtt = require('mqtt');
 
     describe('begin tests', function () {
@@ -24,26 +24,61 @@ describe('mqtt tests', function () {
             }).to.throw(ReferenceError);
             mqtt.end();
         });
-        
+
         it('should publish "1" to `online` topic', function (done) {
             var mqttClient = Mqtt.connect(broker);
 
             mqttClient.on('connect', function () {
+                mqttClient.on('message', function (topic, message, packet) {
+                   if (!packet.retain) {                       
+                       expect(message.toString()).to.equal('1');
+                       
+                       /* Unsubscribe to ignore subsequent messages. */                       
+                       mqttClient.unsubscribe(onlineTopic);
+                       
+                       mqtt.end(function () {
+                           mqttClient.end(true, done);
+                       });
+                   } 
+                });
                 mqttClient.subscribe(onlineTopic);
                 mqtt.begin(broker, rootTopic, null, null);
-            });
+            });            
+        });
 
-            mqttClient.on('message', function (topic, message, packet) {
-                if (!packet.retain) {
-                    expect(topic).to.equal(onlineTopic);
-                    expect("1").to.equal(message.toString());
-                    mqtt.end(function () {
-                        mqttClient.end(true, done);
-                    });
-                }
+    });
+
+    describe('end tests', function () {
+
+        var onlineTopic = rootTopic + '/online';
+
+        it('should close the MQTT client connection', function (done) {
+            mqtt.begin(broker, rootTopic, null, function () {
+                mqtt.end(done);
             });
         });
 
+        it('should not complain if begin() not called first', function () {
+            mqtt.end();
+        });
+
+        it('should publish "0" to online status topic', function (done) {
+            var mqttClient = Mqtt.connect(broker);
+            mqttClient.on('connect', function () {
+                mqtt.begin(broker, rootTopic, null, function () {
+                    mqttClient.on('message', function (topic, message, packet) {
+                        if (!packet.retain) {
+                            expect(message.toString()).to.equal('0');
+                        }
+                    });
+                    mqttClient.subscribe(onlineTopic);
+                    mqtt.end();
+                    setTimeout(function () {
+                        mqttClient.end(true, done);
+                    }, 1000);
+                });
+            });
+        });
     });
 
     describe('publishXBeeFrame tests', function () {

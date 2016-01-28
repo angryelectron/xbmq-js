@@ -1,5 +1,5 @@
 {
-  "name": "node-xbmq",
+  "name": "xbmq",
   "description": "XBee to MQTT gateway",
   "version": "1.0.0",
   "keywords": [

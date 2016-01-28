@@ -4,15 +4,34 @@ var xbee_api = require('xbee-api');
 
 module.exports = {
     begin: begin,
+    end: end,
     getLocalAddress: getLocalAddress,
-    transmitMqttMessage: transmitMqttMessage
+    transmitMqttMessage: transmitMqttMessage,
+    xbeeCommand: xbeeCommand
 };
 
 var serialport;
 var C = xbee_api.constants;
 var xbeeAPI = new xbee_api.XBeeAPI({api_mode: 2});
 
+/**
+ * Start a connection with the local XBee.
+ * @param {string} port
+ * @param {int} baud
+ * @param {function ()} readyCallback - called when XBee connection is ready.
+ * @param {function(error, frame)} messageCallback - called when an XBee frame
+ * is received or there is an error. 
+ */
 function begin(port, baud, readyCallback, messageCallback) {
+
+    if (!readyCallback || readyCallback.length !== 0) {
+        throw new TypeError("Invalid readyCallback - function has 1 argument.");
+    }
+
+    if (!messageCallback || messageCallback.length !== 2) {
+        throw new TypeError("Invalid messageCallback - function has 2 arguments.");
+    }
+
     serialport = new SerialPort(port, {
         baudrate: baud,
         parser: xbeeAPI.rawParser()
@@ -28,7 +47,7 @@ function begin(port, baud, readyCallback, messageCallback) {
         messageCallback(error, null);
     });
 
-    xbeeAPI.on('frame_object', function (frame) {
+    xbeeAPI.on('frame_object', function (frame) {        
         messageCallback(null, frame);
     });
 
@@ -37,34 +56,40 @@ function begin(port, baud, readyCallback, messageCallback) {
     });
 }
 
+function end(callback) {
+    serialport.close(callback);
+}
+
 function transmitMqttMessage(message) {
-                    
+
+    var frame;
+
     try {
-        var frame = JSON.parse(message);
-        
-        /*
-         * JSON doesn't support hex numbers.  If a hex string was sent,
-         * convert it to an integer.
-         */
-        if (typeof frame.type === 'string') {
-            frame.type = parseInt(frame.type);
-        }        
-        if (typeof frame.id === 'string') {
-            frame.id = parseInt(frame.id);
-        }
-        
-        /*
-         * If the sender doesn't include a commandParameter array, add it for
-         * them.  This is for convenience, as many commands don't take parameters.
-         */
-        if (!frame.commandParameter) {
-            frame.commandParameter = [];
-        }
-        
-        serialport.write(xbeeAPI.buildFrame(frame));
-    } catch (error) {        
-        xbeeAPI.emit('error', error);
+        frame = JSON.parse(message);
+    } catch (error) {
+        throw error;
     }
+
+    /*
+     * JSON doesn't support hex numbers.  If a hex string was sent,
+     * convert it to an integer.
+     */
+    if (typeof frame.type === 'string') {
+        frame.type = parseInt(frame.type);
+    }
+    if (typeof frame.id === 'string') {
+        frame.id = parseInt(frame.id);
+    }
+
+    /*
+     * If the sender doesn't include a commandParameter array, add it for
+     * them.  This is for convenience, as many commands don't take parameters.
+     */
+    if (!frame.commandParameter) {
+        frame.commandParameter = [];
+    }
+
+    serialport.write(xbeeAPI.buildFrame(frame));
 }
 
 
