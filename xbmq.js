@@ -1,6 +1,6 @@
 var xbee = require('./xbee');
 var mqtt = require('./mqtt');
-
+var log = require('./logger');
 
 /*
  * User-configurable settings.
@@ -30,41 +30,48 @@ xbee.begin(port, baud, beginMqtt, whenXBeeMessageReceived);
  * address as part of the topic.
  */
 function beginMqtt() {
-    xbee.getLocalAddress().then(function (address) {
-        gatewayTopic = rootTopic + '/' + address;
-        console.log('Gateway Topic: ' + gatewayTopic);
+    xbee.getLocalNI().then(function (name) {
+        gatewayTopic = rootTopic + '/' + name;
+        log('info', 'Gateway Topic: ' + gatewayTopic);
         mqtt.begin(broker, gatewayTopic, whenMqttMessageReceived);
     });
 }
 
 function whenMqttMessageReceived(error, topic, message) {
-        
+
     if (error) {
-        console.log(error);
-        mqtt.publishLog(error);
+        log(error);
+        /*
+         * Logging MQTT errors back to MQTT may create a infinite loop.
+         */
+        //mqtt.publishLog(error);
         return;
     }
 
     try {
         xbee.transmitMqttMessage(message);
-    } catch(error) {
-        console.log(error);
+    } catch (error) {
+        log(error);
         mqtt.publishLog(error);
     }
 }
 
 function whenXBeeMessageReceived(error, frame) {
-    if (error) {
-        console.log(error);
-        mqtt.publishLog(error);
-        return;
-    }
-
     try {
-        mqtt.publishXBeeFrame(frame);
+        if (error) {
+            log('error', error);
+            if (mqtt.isConnected()) {
+                mqtt.publishLog(error);
+            }
+        } else {
+            if (mqtt.isConnected()) {
+                mqtt.publishXBeeFrame(frame);
+            }
+        }
     } catch (error) {
-        if (!error instanceof ReferenceError) {
-            console.log(error);
+        log('error', error);
+        if (mqtt.isConnected()) {
+            mqtt.publishLog(error);
         }
     }
 }
@@ -73,5 +80,4 @@ function whenXBeeMessageReceived(error, frame) {
 module.exports = {
     whenMqttMessageReceived: whenMqttMessageReceived,
     whenXBeeMessageReceived: whenXBeeMessageReceived
-}
-;
+};

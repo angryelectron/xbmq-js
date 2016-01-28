@@ -30,20 +30,20 @@ describe('mqtt.js', function () {
 
             mqttClient.on('connect', function () {
                 mqttClient.on('message', function (topic, message, packet) {
-                   if (!packet.retain) {                       
-                       expect(message.toString()).to.equal('1');
-                       
-                       /* Unsubscribe to ignore subsequent messages. */                       
-                       mqttClient.unsubscribe(onlineTopic);
-                       
-                       mqtt.end(function () {
-                           mqttClient.end(true, done);
-                       });
-                   } 
+                    if (!packet.retain) {
+                        expect(message.toString()).to.equal('1');
+
+                        /* Unsubscribe to ignore subsequent messages. */
+                        mqttClient.unsubscribe(onlineTopic);
+
+                        mqtt.end(function () {
+                            mqttClient.end(true, done);
+                        });
+                    }
                 });
                 mqttClient.subscribe(onlineTopic);
                 mqtt.begin(broker, rootTopic, null, null);
-            });            
+            });
         });
 
     });
@@ -83,57 +83,18 @@ describe('mqtt.js', function () {
 
     describe('publishXBeeFrame tests', function () {
 
-        var responseTopic = rootTopic + '/1234/response';
+        var responseTopic = rootTopic + '/response';
         var testFrame = {
             remote64: '1234'
         };
 
-        it('should fail if begin() not called', function () {
+        it('should fail if MQTT not connected', function () {
             expect(function () {
                 mqtt.publishXBeeFrame(testFrame);
             }).to.throw(ReferenceError);
 
         });
-
-        it('should fail if frame is invalid', function (done) {
-            mqtt.begin(broker, rootTopic, null, function () {
-                expect(function () {
-                    mqtt.publishXBeeFrame();
-                }).to.throw(ReferenceError);
-                mqtt.end(done);
-            });
-        });
-
-        it('should fail if frame is missing 64-bit address', function (done) {
-            mqtt.begin(broker, rootTopic, null, function () {
-                expect(function () {
-                    mqtt.publishXBeeFrame();
-                }).to.throw(ReferenceError);
-                mqtt.end(done);
-            });
-        });
-
-        it('should publish frame data to rootTopic/gateway/response', function (done) {
-            var mqttClient = Mqtt.connect(broker);
-
-            mqttClient.on('connect', function () {
-                mqttClient.subscribe(responseTopic);
-                mqtt.begin(broker, rootTopic, null, function () {
-                    mqtt.publishXBeeFrame(testFrame);
-                });
-            });
-
-            mqttClient.on('message', function (t, m) {
-                var message = JSON.parse(m);
-                expect(t).to.equal(responseTopic);
-                expect(message).to.eql(testFrame);
-                mqtt.end(function () {
-                    mqttClient.end(done);
-                });
-            });
-
-        });
-
+        
     });
 
     describe('publishLog tests', function () {

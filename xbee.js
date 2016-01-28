@@ -1,13 +1,14 @@
 var q = require('q');
 var SerialPort = require('serialport').SerialPort;
 var xbee_api = require('xbee-api');
+var log = require('./logger');
 
 module.exports = {
     begin: begin,
     end: end,
     getLocalAddress: getLocalAddress,
-    transmitMqttMessage: transmitMqttMessage,
-    xbeeCommand: xbeeCommand
+    getLocalNI: getLocalNI,
+    transmitMqttMessage: transmitMqttMessage
 };
 
 var serialport;
@@ -38,12 +39,12 @@ function begin(port, baud, readyCallback, messageCallback) {
     });
 
     serialport.on('open', function () {
-        console.log('Serial Port Open');
+        log('debug', 'Serial Port Open');
         readyCallback();
     });
 
     serialport.on('error', function (error) {
-        console.log(error);
+        log('error', error);
         messageCallback(error, null);
     });
 
@@ -52,6 +53,7 @@ function begin(port, baud, readyCallback, messageCallback) {
     });
 
     xbeeAPI.on('error', function (error) {
+        log('error', error);
         messageCallback(error, null);
     });
 }
@@ -88,7 +90,7 @@ function transmitMqttMessage(message) {
     if (!frame.commandParameter) {
         frame.commandParameter = [];
     }
-
+    
     serialport.write(xbeeAPI.buildFrame(frame));
 }
 
@@ -135,5 +137,17 @@ function getLocalAddress() {
             }).then(function (sl) {
         gw += sl.commandData.toString('hex');
         return gw;
+    });
+}
+
+function getLocalNI() {    
+    var frame = {
+        type: C.FRAME_TYPE.AT_COMMAND,
+        command: 'NI',
+        commandParameter: []
+    };    
+    return xbeeCommand(frame)
+            .then(function (ni) {
+                return ni.commandData.toString();    
     });
 }

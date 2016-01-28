@@ -1,14 +1,21 @@
 var Mqtt = require('mqtt');
+var log = require('./logger');
 
 module.exports = {
     begin: begin,
     end: end,
     publishXBeeFrame: publishXBeeFrame,
-    publishLog: publishLog
+    publishLog: publishLog,
+    isConnected: isConnected
 };
 
 var mqtt;
 var rootTopic;
+var connected = false;
+
+function isConnected() {
+    return connected && mqtt && rootTopic;
+}
 
 /*
  * Start the MQTT client, establish LWT, subscribe to the request topic,
@@ -44,31 +51,32 @@ function begin(broker, topic, messageCallback, connectedCallback) {
         /*
          * Emitted when a reconnection starts.
          */
-        console.log("Reconnecting.");
+        log('debug', 'Reconnecting');
     });
 
     mqtt.on('close', function () {
         /*
          * Emitted after the client has disconnected from the broker.
          */
-        console.log("Closing.");
+        log('debug', 'Closing');
+        connected = false;
     });
 
     mqtt.on('offline', function () {
         /*
          * Emitted when the client goes offline. 
          */
-        console.log("Offline");
+        log('debug', 'Offline');
     });
 
     mqtt.on('connect', function (connack) {
-        console.log("Connected");
+        log('debug', 'Connected');
+        connected = true;
         publishOnlineStatus(true);
         if (connack.sessionPresent) {
             /* This is a reconnect.  No need to re-subscribe or
              * call the callback.
-             */
-            console.log("Using existing session.");
+             */            
             return;
         }
         mqtt.subscribe(rootTopic + '/request', null, function (error) {
@@ -83,12 +91,12 @@ function begin(broker, topic, messageCallback, connectedCallback) {
     });
 
     mqtt.on('error', function (error) {
-        console.log(error);
+        log('error', error);
         return messageCallback(error, null, null);
     });
 
     mqtt.on('message', function (topic, message) {
-        console.log('Received: ' + topic + ': ' + message);
+        log('debug', 'Received: ' + topic + ': ' + message);
         return messageCallback(null, topic, message.toString());
     });
 
@@ -122,6 +130,7 @@ function publishOnlineStatus(isOnline) {
     var message = isOnline ? '1' : '0';
     var topic = rootTopic + '/online';
     mqtt.publish(topic, message);
+    connected = isOnline;
 }
 
 /**
@@ -131,12 +140,9 @@ function publishOnlineStatus(isOnline) {
  * @throws {ReferenceError} - If frame is invalid or has no remote64 address.
  */
 function publishXBeeFrame(frame) {
-    if (!mqtt || !rootTopic)
-        throw new ReferenceError("Calling publishXBeeFrame() before begin().");
-    if (!frame || !frame.remote64)
-        throw new ReferenceError("Invalid frame.");
-
-    var topic = rootTopic + "/" + frame.remote64 + '/response';
+    if (!isConnected()) throw new ReferenceError("MQTT not conencted.");
+    if (!frame) return; /* don't publish empty frames */
+    var topic = rootTopic + '/response';        
     var message = JSON.stringify(frame);
     mqtt.publish(topic, message);
 }
@@ -148,11 +154,9 @@ function publishXBeeFrame(frame) {
  * @throws {TypeError} - If message is not an Error or a string.
  */
 function publishLog(message) {
-    if (!mqtt || !rootTopic)
-        throw new ReferenceError("Calling publishLog() before begin().");
+    if (!isConnected()) throw new ReferenceError("MQTT not conencted.");
     if (!message instanceof Error)
         throw new TypeError("Mesage must be an Error or a String.");
-
     var topic = rootTopic + '/log';
     mqtt.publish(topic, message.message || message);
 }

@@ -6,12 +6,13 @@ var xbmq;
 var mqttStub;
 var xbeeStub;
 
-describe('xbmq', function () {
+describe('xbmq.js', function () {
 
     before(function () {
         mqttStub = {
             publishLog: sinon.stub(),
-            publishXBeeFrame: sinon.stub()
+            publishXBeeFrame: sinon.stub(),
+            isConnected: function () {return true;}
         };
 
         xbeeStub = {
@@ -32,16 +33,9 @@ describe('xbmq', function () {
         mockery.disable();
     });
 
-    describe('whenXBeeMessageReceived', function () {
-        
-        it('it logs errors to the console', function () {
-            var spy = sinon.spy(console, "log");
-            xbmq.whenXBeeMessageReceived(" ", null, null);
-            sinon.assert.calledOnce(spy);
-            spy.restore();
-        });
+    describe('whenXBeeMessageReceived', function () {                
 
-        it('it calls mqtt.publishLog()', function () {
+        it('it calls mqtt.publishLog() on error', function () {
             mqttStub.publishLog.reset();
             xbmq.whenXBeeMessageReceived(" ", null, null);
             sinon.assert.calledOnce(mqttStub.publishLog);
@@ -62,18 +56,11 @@ describe('xbmq', function () {
     });
 
     describe('whenMqttMessageReceived', function () {
-
-        it('it logs errors to the console', function () {
-            var spy = sinon.spy(console, "log");
-            xbmq.whenMqttMessageReceived(" ", null, null);
-            sinon.assert.calledOnce(spy);
-            spy.restore();
-        });
-
-        it('it calls mqtt.publishLog()', function () {
+        
+        it('it does not call mqtt.publishLog() on error', function () {
             mqttStub.publishLog.reset();
             xbmq.whenMqttMessageReceived(" ", null, null);
-            sinon.assert.calledOnce(mqttStub.publishLog);
+            assert(!mqttStub.publishLog.called);
         });
 
         it('it calls xbee.transmitMqttMessage()', function () {

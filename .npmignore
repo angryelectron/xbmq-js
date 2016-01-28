@@ -4,3 +4,4 @@ nbproject
 *.tgz
 test
 package
+*.log
