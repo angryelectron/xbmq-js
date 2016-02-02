@@ -31,7 +31,7 @@ xbee.begin(port, baud, beginMqtt, whenXBeeMessageReceived);
  */
 function beginMqtt() {
     xbee.getLocalNI().then(function (name) {
-        gatewayTopic = rootTopic + '/' + name;
+        gatewayTopic = rootTopic + '/' + name.trim();
         log('info', 'Gateway Topic: ' + gatewayTopic);
         mqtt.begin(broker, gatewayTopic, whenMqttMessageReceived);
     });
