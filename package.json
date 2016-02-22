@@ -2,6 +2,8 @@
   "name": "xbmq",
   "description": "XBee to MQTT gateway",
   "version": "1.0.0",
+  "private": true,
+  "preverGlobal": true,
   "keywords": [
     "xbee",
     "mqtt",
@@ -18,20 +20,28 @@
   },
   "license": "GPL-3.0",
   "dependencies": {
-    "mqtt": "^1.6.3",
-    "q": "^1.4.1",
-    "serialport": "^2.0.6",
+    "mqtt": "^1.7.2",
+    "q": "^2.0.3",
     "winston": "^2.1.1",
     "xbee-api": "^0.4.0"
+  },
+  "bundledDependencies": [
+    "mqtt",
+    "q",
+    "winston",
+    "xbee-api"
+  ],
+  "optionalDependencies": {
+    "serialport": "*"
   },
   "scripts": {
     "start": "node xbmq.js",
     "test": "mocha"
   },
   "devDependencies": {
-    "chai": "^3.4.1",
-    "mocha": "^2.3.4",
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5",
     "mockery": "^1.4.0",
-    "sinon": "^1.17.2"
+    "sinon": "^1.17.3"
   }
 }
