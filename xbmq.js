@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var xbee = require('./xbee');
 var mqtt = require('./mqtt');
 var log = require('./logger');
