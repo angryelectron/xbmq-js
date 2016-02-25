@@ -4,26 +4,38 @@ XBee to MQTT Gateway
 XBee networks through MQTT messages and aims to do as little processing as
 possible, allowing it to run reliably and on low-power devices like OpenWrt.
 
-PreRequisites
--------------
-To run xbmq, you must have:
-
-1. Node.js, npm
-2. An XBee radio in Escaped API mode (AP=2).
-3. A connection from the XBee to a serial port.
-
-Installation
+Quick Start
 ------------
-1. Run `npm install xbmq -g`.
-2. Edit xbmq.js to set options such as broker and serial port.
-3. Connect an XBee serial adapter.
-4. Run `xbmq`
+Install xbmq via `npm install xbmq`. 
+
+Configure the local XBee:
+
+* ID - set the same for all radios in the network.
+* AP=2 - xbmq uses API mode to communicate with the local XBee.
+* NI - the Node Identifier of the local XBee is used as an MQTT topic.  Optional,
+but recommended.
+* Connect the local XBee using a serial port adapter (Sparkfun's XBee Explorer,
+Adafruit's XBee Adapter, etc.)
+
+Configure xbmq with your mqtt and serial port settings using command-line
+arguments.  The arguments and their default values are:
+
+* --rootTopic xbmq
+* --broker mqtt://test.mosquitto.org
+* --port /dev/ttyUSB0
+* --baud 9600
+* --log ./xbmq.log
+* --loglevel info
+
+Alternatively, use a config file instead.  Copy or rename `config.json.sample` to 
+`config.json`.  Note: Command-line arguments override config.json.
+
 
 Operation
 ---------
 All MQTT messages (to and from the XBee network) are published to subtopics of
-`rootTopic/nodeIdentifier`, where `rootTopic` is defined in xbmq.js 
-and `nodeIdentifier` is the NI value of the local XBee.  If NI is not set, the
+`rootTopic/gatewayIdentifier`, where `rootTopic` is configured as above
+and `gatewayIdentifier` is the NI value of the local XBee.  If NI is not set, the
 radio's 64-bit address will be used instead.
 
 ### Topic: rootTopic/gatewayIdentifier/Online

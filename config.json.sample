@@ -1,0 +1,8 @@
+{
+    "rootTopic" : "ab123",
+    "broker" : "mqtt://192.168.2.41",
+    "port" : "/dev/ttyUSB0",
+    "baud" : 9600,
+    "log" : "./xbmq.log",
+    "loglevel" : "info"
+}

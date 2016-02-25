@@ -2,3 +2,4 @@ nbproject/private
 node_modules
 *.tgz
 xbmq.log
+config.json

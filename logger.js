@@ -1,8 +1,10 @@
 var winston = require('winston');
+var nconf = require('./nconf');
+
 winston.add(winston.transports.File, {
-    filename: 'xbmq.log',
+    filename: nconf.get('log'),
     maxsize: 10000000,
     maxFiles: 2
 });
-winston.level = 'debug';
+winston.level = nconf.get('loglevel');
 module.exports = winston.log;

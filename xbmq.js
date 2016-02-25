@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 
+/*
+ * XBee to MQTT Gateway
+ * Copyright 2015-2016 Andrew Bythell <abythell@ieee.org>
+ */
+
 var xbee = require('./xbee');
 var mqtt = require('./mqtt');
 var log = require('./logger');
+var nconf = require('./nconf');
 
-/*
- * User-configurable settings.
- * TODO: read these from the command line.
- */
-var rootTopic = 'ab123';
-var broker = 'mqtt://192.168.2.41';
-var port = '/dev/ttyUSB0';
-var baud = 9600;
+var rootTopic = nconf.get('rootTopic');
+var broker = nconf.get('broker');
+var port = nconf.get('port');
+var baud = nconf.get('baud');
 
 /*
  * Global variables
