@@ -73,6 +73,17 @@ Tips for Using with MQTT Clients
 * Connect a JSON node to the output of the MQTT node that is subscribed to the
 `request` topic.
 
+Embedded Application Note
+-------------------------
+xbmq-js is intended to run on single board computers, OpenWrt routers,
+and other devices with limited resources that either can't access npm repositories,
+don't have native compilers, or just take forever to run `npm install`.
+
+This is why dependencies without native components have been bundled with the 
+application.  `serialport` is listed as an optional dependency because 
+installing it involves native compiling, which typically can't be done on these
+limited devices.
+
 About
 -----
 * xbmq-js, copyright 2015-2016 Andrew Bythell, [abythell@ieee.org](mailto:abythell@ieee.org)
