@@ -5,3 +5,4 @@ nbproject
 test
 package
 *.log
+config.json
