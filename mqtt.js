@@ -144,6 +144,7 @@ function publishXBeeFrame(frame) {
     if (!frame) return; /* don't publish empty frames */
     var topic = rootTopic + '/response';        
     var message = JSON.stringify(frame);
+    log('debug', 'Sending: ' + topic + ': ' + message);
     mqtt.publish(topic, message);
 }
 
