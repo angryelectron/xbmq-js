@@ -2,7 +2,7 @@ XBee to MQTT Gateway
 ====================
 `xbmq` is a NodeJs XBee-to-MQTT gateway.  It allows two-way communication with
 XBee networks through MQTT messages and aims to do as little processing as
-possible, allowing it to run reliably and on low-power devices like OpenWrt.
+possible, allowing it to run reliably and on low-power / embedded devices.
 
 Quick Start
 ------------
@@ -11,7 +11,7 @@ Install xbmq via `npm install xbmq`.
 Configure the local XBee:
 
 * ID - set the same for all radios in the network.
-* AP=2 - xbmq uses API mode to communicate with the local XBee.
+* AP=1 or 2 - xbmq uses API mode to communicate with the local XBee.
 * NI - the Node Identifier of the local XBee is used as an MQTT topic.  Optional,
 but recommended.
 * Connect the local XBee using a serial port adapter (Sparkfun's XBee Explorer,
@@ -26,6 +26,7 @@ arguments.  The arguments and their default values are:
 * --baud 9600
 * --log ./xbmq.log
 * --loglevel info
+* --apiMode 2
 
 Alternatively, use a config file instead.  Copy or rename `config.json.sample` to 
 `config.json`.  Note: Command-line arguments override config.json.
@@ -38,7 +39,7 @@ All MQTT messages (to and from the XBee network) are published to subtopics of
 and `gatewayIdentifier` is the NI value of the local XBee.  If NI is not set, the
 radio's 64-bit address will be used instead.
 
-### Topic: rootTopic/gatewayIdentifier/Online
+### Topic: rootTopic/gatewayIdentifier/online
 Message Type: String
 Message Value: "1" for online, "0" for offline
 

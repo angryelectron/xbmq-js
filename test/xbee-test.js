@@ -33,6 +33,7 @@ describe('xbee.js', function () {
 
     var port = '/doesnt/matter';
     var baud = 9600;
+    var apiMode = 2;
 
     var serialportspy;
     before(function () {
@@ -56,17 +57,28 @@ describe('xbee.js', function () {
                 xbee.begin();
             }).to.throw(TypeError);
         });
+        
         it('should throw if baud is invalid', function () {
             expect(function () {
                 xbee.begin(port, null);
             }).to.throw(TypeError);
         });
-        it('should throw if callbacks are invalid', function () {
+        
+        it('should throw if apiMode is invalid', function () {
             expect(function () {
-                xbee.begin(port, baud, null);
+                xbee.begin(port, baud, 0);
             }).to.throw(TypeError);
             expect(function () {
-                xbee.begin(port, baud, function (arg1, arg2) {});
+                xbee.begin(port, baud, 3);
+            }).to.throw(TypeError);
+        });
+        
+        it('should throw if callbacks are invalid', function () {
+            expect(function () {
+                xbee.begin(port, baud, apiMode, null);
+            }).to.throw(TypeError);
+            expect(function () {
+                xbee.begin(port, baud, apiMode, function (arg1, arg2) {});
             }).to.throw(TypeError);
         });
 
@@ -74,11 +86,11 @@ describe('xbee.js', function () {
             var message = function (error, frame) {
                 expect(error).to.be.null;
             };
-            xbee.begin(port, baud, function () {
+            xbee.begin(port, baud, apiMode, function () {
                 expect(serialportspy.called).to.be.ok;
                 xbee.end(done);
             }, message);
-        });
+        });                
 
         it('should call messageCallback on error', function (done) {
             var ready = function () {};
@@ -86,11 +98,11 @@ describe('xbee.js', function () {
                 expect(error).to.be.ok;
                 done();
             };
-            xbee.begin('bad', baud, ready, message);
+            xbee.begin('bad', baud, apiMode, ready, message);
         });
     });
 
-    describe('transmittMqttMessage tests', function () {
+    describe('transmitMqttMessage tests', function () {
 
         var testFrame = {
             type: 0x09,
@@ -112,7 +124,7 @@ describe('xbee.js', function () {
                 done();
             };
             var message = function (a, b) {};
-            xbee.begin(port, baud, ready, message);
+            xbee.begin(port, baud, apiMode, ready, message);
         });
 
         it('should accept valid xbee-api frames', function (done) {
@@ -130,7 +142,7 @@ describe('xbee.js', function () {
                 done();
             };
             var message = function (a, b) {};
-            xbee.begin(port, baud, ready, message);
+            xbee.begin(port, baud, apiMode, ready, message);
         });
 
     });

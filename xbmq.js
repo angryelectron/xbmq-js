@@ -14,6 +14,7 @@ var rootTopic = nconf.get('rootTopic');
 var broker = nconf.get('broker');
 var port = nconf.get('port');
 var baud = nconf.get('baud');
+var apiMode = nconf.get('apiMode');
 
 /*
  * Global variables
@@ -27,7 +28,7 @@ var gatewayTopic;
  * Local and remote XBees must have the same ID and use
  * API mode 2.
  */
-xbee.begin(port, baud, beginMqtt, whenXBeeMessageReceived);
+xbee.begin(port, baud, apiMode, beginMqtt, whenXBeeMessageReceived);
 
 /*
  * Start the MQTT client.  Use the local XBee's 64-bit

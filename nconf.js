@@ -10,7 +10,8 @@ nconf.defaults({
     port: '/dev/ttyUSB0',
     baud: 9600,
     log: __dirname + '/xbmq.log',
-    loglevel: 'info'
+    loglevel: 'info',
+    apiMode: 2
 });
 
 module.exports = nconf;

@@ -13,17 +13,18 @@ module.exports = {
 
 var serialport;
 var C = xbee_api.constants;
-var xbeeAPI = new xbee_api.XBeeAPI({api_mode: 2});
+var xbeeAPI;
 
 /**
  * Start a connection with the local XBee.
- * @param {string} port
- * @param {int} baud
+ * @param {string} port - XBee serial port
+ * @param {int} baud - XBee baud rate
+ * @param {int} apiMode - 1 or 2
  * @param {function ()} readyCallback - called when XBee connection is ready.
  * @param {function(error, frame)} messageCallback - called when an XBee frame
  * is received or there is an error. 
  */
-function begin(port, baud, readyCallback, messageCallback) {
+function begin(port, baud, apiMode, readyCallback, messageCallback) {
 
     if (!readyCallback || readyCallback.length !== 0) {
         throw new TypeError("Invalid readyCallback - function has 1 argument.");
@@ -32,6 +33,12 @@ function begin(port, baud, readyCallback, messageCallback) {
     if (!messageCallback || messageCallback.length !== 2) {
         throw new TypeError("Invalid messageCallback - function has 2 arguments.");
     }
+    
+    if (!apiMode || apiMode < 1 || apiMode > 2 ) {
+        throw new TypeError("Invalid API mode (1 or 2)");
+    }
+    
+    xbeeAPI = new xbee_api.XBeeAPI({api_mode: apiMode});
 
     serialport = new SerialPort(port, {
         baudrate: baud,

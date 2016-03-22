@@ -155,9 +155,12 @@ function publishXBeeFrame(frame) {
  * @throws {TypeError} - If message is not an Error or a string.
  */
 function publishLog(message) {
-    if (!isConnected()) throw new ReferenceError("MQTT not conencted.");
-    if (!message instanceof Error)
+    if (!isConnected()) {
+        throw new ReferenceError("MQTT not conencted.");
+    }
+    if (!message || !message instanceof Error) {
         throw new TypeError("Mesage must be an Error or a String.");
+    }
     var topic = rootTopic + '/log';
     mqtt.publish(topic, message.message || message);
 }
