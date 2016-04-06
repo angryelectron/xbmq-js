@@ -30,7 +30,8 @@
     "mqtt",
     "q",
     "winston",
-    "xbee-api"
+    "xbee-api",
+    "nconf"
   ],
   "optionalDependencies": {
     "serialport": "*"
