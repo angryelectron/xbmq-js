@@ -24,7 +24,7 @@
     "nconf": "^0.8.4",
     "q": "^2.0.3",
     "winston": "^2.1.1",
-    "xbee-api": "^0.4.0"
+    "xbee-api": "^0.4.2"
   },
   "bundledDependencies": [
     "mqtt",
