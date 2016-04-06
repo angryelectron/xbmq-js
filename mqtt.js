@@ -70,7 +70,7 @@ function begin(broker, topic, messageCallback, connectedCallback) {
     });
 
     mqtt.on('connect', function (connack) {
-        log('debug', 'Connected');
+        log('debug', 'Connected to ' + broker);
         connected = true;
         publishOnlineStatus(true);
         if (connack.sessionPresent) {
