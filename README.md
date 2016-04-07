@@ -46,12 +46,11 @@ Message Value: "1" for online, "0" for offline
 Messages are published to this topic by the gateway to indicate the gateway's
 online status.  
 
-### Topic: rootTopic/gatewayIdentifier/xbeeAddress/response
+### Topic: rootTopic/gatewayIdentifier/response
 Message Type: JSON string
 Message Value: An [xbee-api](https://www.npmjs.com/package/xbee-api) frame
 
-Messages from the XBee radio with address `xbeeAddress` are published to this 
-topic. 
+Messages from the XBee network are published to this topic. 
 
 ### Topic: rootTopic/gatewayIdentifier/request
 Message Type: JSON string
