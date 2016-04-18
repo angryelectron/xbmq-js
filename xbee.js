@@ -33,11 +33,11 @@ function begin(port, baud, apiMode, readyCallback, messageCallback) {
     if (!messageCallback || messageCallback.length !== 2) {
         throw new TypeError("Invalid messageCallback - function has 2 arguments.");
     }
-    
+
     if (!apiMode || apiMode < 1 || apiMode > 2 ) {
         throw new TypeError("Invalid API mode (1 or 2)");
     }
-    
+
     xbeeAPI = new xbee_api.XBeeAPI({api_mode: apiMode});
 
     serialport = new SerialPort(port, {
@@ -55,7 +55,7 @@ function begin(port, baud, apiMode, readyCallback, messageCallback) {
         messageCallback(error, null);
     });
 
-    xbeeAPI.on('frame_object', function (frame) {        
+    xbeeAPI.on('frame_object', function (frame) {
         messageCallback(null, frame);
     });
 
@@ -97,7 +97,7 @@ function transmitMqttMessage(message) {
     if (!frame.commandParameter) {
         frame.commandParameter = [];
     }
-    
+
     serialport.write(xbeeAPI.buildFrame(frame));
 }
 
@@ -123,7 +123,12 @@ function xbeeCommand(frame) {
 
     xbeeAPI.on('frame_object', callback);
     serialport.write(xbeeAPI.buildFrame(frame));
-    return deferred.promise.timeout(timeout);
+    return deferred.promise.timeout(timeout, "XBee not responding.").then(
+            function(response) {
+                return response;
+            }, function(timeout) {
+                log('error', timeout.message);
+            });
 }
 
 /**
@@ -147,14 +152,14 @@ function getLocalAddress() {
     });
 }
 
-function getLocalNI() {    
+function getLocalNI() {
     var frame = {
         type: C.FRAME_TYPE.AT_COMMAND,
         command: 'NI',
         commandParameter: []
-    };    
+    };
     return xbeeCommand(frame)
             .then(function (ni) {
-                return ni.commandData.toString();    
-    });
+                return ni.commandData.toString();
+            });
 }
