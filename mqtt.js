@@ -128,8 +128,8 @@ function end(callback) {
  */
 function publishOnlineStatus(isOnline) {
     var message = isOnline ? '1' : '0';
-    var topic = rootTopic + '/online';
-    mqtt.publish(topic, message);
+    var topic = rootTopic + '/online';    
+    mqtt.publish(topic, message, {retain: true});
     connected = isOnline;
 }
 
@@ -162,5 +162,5 @@ function publishLog(message) {
         throw new TypeError("Mesage must be an Error or a String.");
     }
     var topic = rootTopic + '/log';
-    mqtt.publish(topic, message.message || message);
+    mqtt.publish(topic, message.message || message, {retain: true});
 }
