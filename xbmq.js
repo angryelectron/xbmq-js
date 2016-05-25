@@ -12,6 +12,10 @@ var nconf = require('./nconf');
 
 var rootTopic = nconf.get('rootTopic');
 var broker = nconf.get('broker');
+var credentials = {
+    username: nconf.get('username'),
+    password: nconf.get('password')
+};
 var port = nconf.get('port');
 var baud = nconf.get('baud');
 var apiMode = nconf.get('apiMode');
@@ -43,7 +47,7 @@ function beginMqtt() {
         }
         gatewayTopic = rootTopic + '/' + name;
         log('info', 'Gateway Topic: ' + gatewayTopic);
-        mqtt.begin(broker, gatewayTopic, whenMqttMessageReceived);
+        mqtt.begin(broker, credentials, gatewayTopic, whenMqttMessageReceived);
     });
 }
 

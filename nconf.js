@@ -7,6 +7,8 @@ nconf.file({
 nconf.defaults({
     rootTopic: 'xbmq',
     broker: 'mqtt://test.mosquitto.org',
+    username: null,
+    password: null,
     port: '/dev/ttyUSB0',
     baud: 9600,
     log: __dirname + '/xbmq.log',

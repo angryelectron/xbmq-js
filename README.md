@@ -22,6 +22,8 @@ arguments.  The arguments and their default values are:
 
 * --rootTopic xbmq
 * --broker mqtt://test.mosquitto.org
+* --username (none)
+* --password (none)
 * --port /dev/ttyUSB0
 * --baud 9600
 * --log ./xbmq.log

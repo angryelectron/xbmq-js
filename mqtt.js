@@ -21,19 +21,16 @@ function isConnected() {
  * Start the MQTT client, establish LWT, subscribe to the request topic,
  * and listen for incoming messages.
  */
-function begin(broker, topic, messageCallback, connectedCallback) {
+function begin(broker, credentials, topic, messageCallback, connectedCallback) {
     if (!topic)
         throw new ReferenceError("Invalid root topic.");
     if (!broker)
         throw new ReferenceError("Invalid broker.");
 
     rootTopic = topic;
-
-    /*
-     * Use the same options as the Java version of XBMQ.
-     */
+    
     var mqttOptions = {
-        clientId: 'node-xbmq-' + Math.random().toString(16).substr(2, 8),
+        clientId: 'xbmq-' + Math.random().toString(16).substr(2, 8),
         clean: false,
         keepalive: 60,
         reconnectPeriod: 15000,
@@ -43,6 +40,11 @@ function begin(broker, topic, messageCallback, connectedCallback) {
             qos: 0,
             retain: true
         }
+    };
+    
+    if (credentials && credentials.username && credentials.password) {
+        mqttOptions.username = credentials.username;
+        mqttOptions.password = credentials.password;
     };
 
     mqtt = Mqtt.connect(broker, mqttOptions);
