@@ -1,5 +1,5 @@
 var q = require('q');
-var SerialPort = require('serialport').SerialPort;
+var SerialPort = require('serialport');
 var xbee_api = require('xbee-api');
 var log = require('./logger');
 
@@ -22,7 +22,7 @@ var xbeeAPI;
  * @param {int} apiMode - 1 or 2
  * @param {function ()} readyCallback - called when XBee connection is ready.
  * @param {function(error, frame)} messageCallback - called when an XBee frame
- * is received or there is an error. 
+ * is received or there is an error.
  */
 function begin(port, baud, apiMode, readyCallback, messageCallback) {
 
