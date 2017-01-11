@@ -38,7 +38,8 @@
   },
   "scripts": {
     "start": "node xbmq.js",
-    "test": "mocha"
+    "test": "mocha",
+    "pretest": "standard"
   },
   "devDependencies": {
     "chai": "^3.5.0",
