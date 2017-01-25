@@ -34,7 +34,7 @@
     "nconf"
   ],
   "optionalDependencies": {
-    "serialport": "*"
+    "serialport": "^4.0.7"
   },
   "scripts": {
     "start": "node xbmq.js",

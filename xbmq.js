@@ -11,86 +11,79 @@ var mqtt = require('./lib/mqtt.js')
 var log = require('./lib/logger.js')
 var nconf = require('./lib/nconf.js')
 
-var rootTopic = nconf.get('rootTopic')
-var broker = nconf.get('broker')
-var credentials = {
-  username: nconf.get('username'),
-  password: nconf.get('password')
-}
-var port = nconf.get('port')
-var baud = nconf.get('baud')
-var apiMode = nconf.get('apiMode')
+xbee.begin(
+  nconf.get('port'),
+  nconf.get('baud'),
+  nconf.get('apiMode'),
+  beginMqtt,                // callback when XBee is ready
+  whenXBeeMessageReceived)  // callback when XBee receives
 
-/*
- * Global variables
- */
-var gatewayTopic
-
-/*
- * Fire up the XBee and invoke the callback once the
- * XBee is ready to receive commands.
- *
- * Local and remote XBees must have the same ID and use
- * API mode 2.
- */
-xbee.begin(port, baud, apiMode, beginMqtt, whenXBeeMessageReceived)
-
-/*
- * Start the MQTT client.  Use the local XBee's 64-bit
- * address as part of the topic.
- */
+/**
+* Connect to MQTT Broker.  Creates a topic `rootTopic/gatewayTopic`
+* where gatewayTopic is the NI of the local XBee or 'UNKNOWN' if NI
+* is not set.
+*/
 function beginMqtt () {
+  var credentials = {
+    username: nconf.get('username'),
+    password: nconf.get('password')
+  }
+
   xbee.getLocalNI().then(function (name) {
     name = name.trim()
     if (!name || name.length === 0) {
       log('error', 'Local XBEE NI not set.')
       name = 'UNKNOWN'
     }
-    gatewayTopic = rootTopic + '/' + name
+    var gatewayTopic = nconf.get('rootTopic') + '/' + name
     log('info', 'Gateway Topic: ' + gatewayTopic)
-    mqtt.begin(broker, credentials, gatewayTopic, whenMqttMessageReceived)
+    mqtt.begin(nconf.get('broker'), credentials, gatewayTopic, whenMqttMessageReceived)
+  }).catch(function (err) {
+    log('error', err.message)
   })
 }
 
+/**
+ * Handle incoming MQTT messages.
+ *
+ * @param {Error} error
+ * @param {string} topic
+ * @param {Object} message
+ */
 function whenMqttMessageReceived (error, topic, message) {
   if (error) {
+    // mqtt errors are not published via mqtt
     log(error)
-        /*
-         * Logging MQTT errors back to MQTT may create a infinite loop.
-         */
-        // mqtt.publishLog(error);
-    return
-  }
-
-  try {
-    xbee.transmitMqttMessage(message)
-  } catch (error) {
-    log(error)
-    mqtt.publishLog(error)
-  }
-}
-
-function whenXBeeMessageReceived (error, frame) {
-  try {
-    if (error) {
-      log('error', error)
+  } else {
+    try {
+      xbee.transmitMqttMessage(message)
+    } catch (error) {
+      log(error)
       if (mqtt.isConnected()) {
         mqtt.publishLog(error)
       }
-    } else {
-      if (mqtt.isConnected()) {
-        mqtt.publishXBeeFrame(frame)
-      }
-    }
-  } catch (error) {
-    log('error', error)
-    if (mqtt.isConnected()) {
-      mqtt.publishLog(error)
     }
   }
 }
 
-module.exports = {
-  whenMqttMessageReceived: whenMqttMessageReceived,
-  whenXBeeMessageReceived: whenXBeeMessageReceived
+/**
+ * Handle incoming XBee messages
+ *
+ * @param {Error} error
+ * @param {Object} frame - XBee API frame
+ */
+function whenXBeeMessageReceived (error, frame) {
+  if (error) {
+    log('error', error.message)
+    if (mqtt.isConnected()) {
+      mqtt.publishLog(error)
+    }
+  } else {
+    try {
+      mqtt.publishXBeeFrame(frame)
+    } catch (error) {
+      log('error', error)
+      mqtt.publishLog(error)
+    }
+  }
 }

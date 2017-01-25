@@ -43,7 +43,7 @@ describe('xbee.js', function () {
     })
     serialportspy = sinon.spy(serialportmock, 'SerialPort')
     mockery.registerMock('serialport', serialportmock)
-    xbee = require('../xbee')
+    xbee = require('../lib/xbee.js')
   })
   after(function () {
     mockery.disable()
