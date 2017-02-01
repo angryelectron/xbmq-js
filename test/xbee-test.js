@@ -86,20 +86,42 @@ describe('XBee', function () {
     })
   })
 
-  describe('xbee.transmitMqttMessage()', function () {
+  describe('XBee#transmitMqttMessage', function () {
+    var xbee
+    beforeEach(function () {
+      var options = {
+        apiMode: 2,
+        port: '/dev/null',
+        baud: 9600,
+        callback: function (e, message) {}
+      }
+      return XBee.create(VirtualSerialPort, XBeeAPI, options).then(function (x) {
+        xbee = x
+      })
+    })
+
+    it('rejects if message is not JSON', function () {
+      return expect(xbee.transmitMqttMessage('this-is-not-json'))
+      .to.eventually.be.rejectedWith('Unexpected token')
+    })
+
+    it('rejects if message is not an API frame', function () {
+      var badFrame = '{"type": "invalid"}'
+      return expect(xbee.transmitMqttMessage(badFrame))
+      .to.eventually.be.rejectedWith('does not implement building')
+    })
+
     it('should accept valid xbee-api frames', function () {
       var standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}'
       var typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}'
       var idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}'
       var noCP = '{"type":9, "id":1, "command":"BD"}'
-      xbee.transmitMqttMessage(standardFrame)
-      xbee.transmitMqttMessage(typeHex)
-      xbee.transmitMqttMessage(idHex)
-      xbee.transmitMqttMessage(noCP)
-    })
-
-    xit('should reject if frame is invalid', function () {
-
+      return Promise.all([
+        xbee.transmitMqttMessage(standardFrame),
+        xbee.transmitMqttMessage(typeHex),
+        xbee.transmitMqttMessage(idHex),
+        xbee.transmitMqttMessage(noCP)
+      ])
     })
   })
 
