@@ -10,18 +10,20 @@ var VirtualSerialPort = require('virtual-serialport')
 var XBeeAPI = require('xbee-api')
 
 describe('XBee', function () {
-  describe('XBee#create', function () {
-    var options
-
-    beforeEach(function () {
-      options = {
-        apiMode: 2,
-        port: '/dev/null',
-        baud: 9600,
-        callback: function (e, message) {}
-      }
+  var xbee, options
+  beforeEach(function () {
+    var options = {
+      apiMode: 2,
+      port: '/dev/null',
+      baud: 9600,
+      callback: function (e, message) {}
+    }
+    return XBee.create(VirtualSerialPort, XBeeAPI, options).then(function (x) {
+      xbee = x
     })
+  })
 
+  describe('XBee#create', function () {
     it('rejects if port is invalid', function () {
       options.port = null
       return expect(XBee.create(SerialPort, XBeeAPI, options))
@@ -87,19 +89,6 @@ describe('XBee', function () {
   })
 
   describe('XBee#transmitMqttMessage', function () {
-    var xbee
-    beforeEach(function () {
-      var options = {
-        apiMode: 2,
-        port: '/dev/null',
-        baud: 9600,
-        callback: function (e, message) {}
-      }
-      return XBee.create(VirtualSerialPort, XBeeAPI, options).then(function (x) {
-        xbee = x
-      })
-    })
-
     it('rejects if message is not JSON', function () {
       return expect(xbee.transmitMqttMessage('this-is-not-json'))
       .to.eventually.be.rejectedWith('Unexpected token')
@@ -125,21 +114,43 @@ describe('XBee', function () {
     })
   })
 
-  describe('xbee.transmit', function () {
-    xit('should reject if frame is invalid', function () {
-
+  describe('XBee#transmit', function () {
+    it('should reject if frame is invalid', function () {
+      return expect(xbee.transmit()).to.eventually.be.rejectedWith('Invalid frame')
     })
 
-    xit('should resolve with a valid frame response', function () {
-
+    xit('resolves with a response', function () {
+      // TODO: figure out how to get the fake serial port to respond with a frame
+      var sp = new SerialPort('/dev/fake')
+      var testFrame = {
+        type: 0x08,
+        command: 'ID',
+        commandParameter: []
+      }
+      var testXBeeApi = new XBeeAPI.XBeeAPI({api_mode: 2})
+      var testBee = new XBee(sp, testXBeeApi)
+      testBee.transmit(testFrame)
     })
 
-    xit('should reject on timeout', function () {
-
+    it('should reject on timeout', function () {
+      var testFrame = {
+        type: 0x08,
+        command: 'ID',
+        commandParameter: []
+      }
+      return expect(xbee.transmit(testFrame, 10)).to.eventually.be.rejectedWith('XBee not responding')
     })
 
-    xit('should reject on serial port error', function () {
-
+    it('should reject on serial port error', function () {
+      var sp = new SerialPort('/dev/fake')
+      var testFrame = {
+        type: 0x08,
+        command: 'ID',
+        commandParameter: []
+      }
+      var testXBeeApi = new XBeeAPI.XBeeAPI({api_mode: 2})
+      var testBee = new XBee(sp, testXBeeApi)
+      return expect(testBee.transmit(testFrame)).to.eventually.be.rejectedWith('Port is not open')
     })
   })
 
