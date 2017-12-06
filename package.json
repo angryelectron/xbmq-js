@@ -20,21 +20,19 @@
   },
   "license": "GPL-3.0",
   "dependencies": {
-    "mqtt": "^1.7.2",
-    "nconf": "^0.8.4",
-    "q": "^2.0.3",
+    "mqtt": "^2.14.0",
+    "nconf": "^0.9.1",
     "winston": "^2.1.1",
-    "xbee-api": "^0.4.2"
+    "xbee-api": "^0.6.0"
   },
   "bundledDependencies": [
-    "mqtt",
-    "q",
+    "mqtt",    
     "winston",
     "xbee-api",
     "nconf"
   ],
   "optionalDependencies": {
-    "serialport": "^4.0.7"
+    "serialport": "^6.0.4"
   },
   "scripts": {
     "start": "node xbmq.js",
@@ -42,12 +40,11 @@
     "pretest": "standard"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "chai-as-promised": "^6.0.0",
-    "mocha": "^2.4.5",
-    "mockery": "^1.4.1",
-    "sinon": "^1.17.3",
-    "standard": "^8.6.0",
-    "virtual-serialport": "^0.3.3"
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^4.0.1",
+    "sinon": "^4.1.2",
+    "standard": "^10.0.3",
+    "virtual-serialport": "^4.0.1"
   }
 }
