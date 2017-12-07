@@ -26,7 +26,7 @@
     "xbee-api": "^0.6.0"
   },
   "bundledDependencies": [
-    "mqtt",    
+    "mqtt",
     "winston",
     "xbee-api",
     "nconf"
@@ -44,7 +44,6 @@
     "chai-as-promised": "^7.1.1",
     "mocha": "^4.0.1",
     "sinon": "^4.1.2",
-    "standard": "^10.0.3",
-    "virtual-serialport": "^4.0.1"
+    "standard": "^10.0.3"    
   }
 }
