@@ -85,23 +85,25 @@ describe('XBee', () => {
   })
 
   describe('XBee#sendFrame', () => {
-    it('rejects on frame write error', () => {
-      var badFrame = '{"type": "invalid"}'
-      xbee.xbeeAPI.builder.write = sinon.stub().throws()
-      return expect(xbee.sendFrame(badFrame)).to.eventually.be.rejected
+    it('throws on frame write error', () => {
+      var badFrame = 'bad'
+      xbee.xbeeAPI.builder.write = sinon.stub().throws(Error('send-error'))
+      expect(() => {
+        xbee.sendFrame(badFrame)
+      }).to.throw('send-error')
     })
     it('should accept valid xbee-api frames', () => {
-      xbee.xbeeAPI.builder.write = sinon.stub().yields()
+      xbee.xbeeAPI.builder.write = sinon.stub()
       var standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}'
       var typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}'
       var idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}'
       var noCP = '{"type":9, "id":1, "command":"BD"}'
-      return Promise.all([
-        xbee.sendFrame(standardFrame),
-        xbee.sendFrame(typeHex),
-        xbee.sendFrame(idHex),
+      expect(() => {
+        xbee.sendFrame(standardFrame)
+        xbee.sendFrame(typeHex)
+        xbee.sendFrame(idHex)
         xbee.sendFrame(noCP)
-      ])
+      }).to.not.throw()
     })
   })
 
