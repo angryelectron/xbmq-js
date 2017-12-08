@@ -1,75 +1,85 @@
-/* global describe it before after */
-var assert = require('assert')
-var sinon = require('sinon')
-var mockery = require('mockery')
+/* eslint-env mocha */
 
-var xbmq
-var mqttStub
-var xbeeStub
+const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
+const sinon = require('sinon')
+chai.use(chaiAsPromised)
+const expect = chai.expect
 
-describe('xbmq.js', function () {
-  before(function () {
-    mqttStub = {
-      publishLog: sinon.stub(),
-      publishXBeeFrame: sinon.stub(),
-      isConnected: function () { return true }
-    }
+const Xbmq = require('../lib/xbmq.js')
 
-    xbeeStub = {
-      begin: sinon.stub(),
-      transmitMqttMessage: sinon.stub()
-    }
-
-    mockery.enable({
-      warnOnUnregistered: false,
-      warnOnReplace: false
-    })
-    mockery.registerMock('./mqtt', mqttStub)
-    mockery.registerMock('./xbee', xbeeStub)
-    xbmq = require('../xbmq')
+describe('Xbmq', () => {
+  let xbmq, logger
+  beforeEach(() => {
+    logger = sinon.stub()
+    xbmq = new Xbmq({}, {}, logger)
   })
-
-  after(function () {
-    mockery.disable()
+  afterEach(() => {
+    logger.reset()
   })
-
-  describe('whenXBeeMessageReceived', function () {
-    it('it calls mqtt.publishLog() on error', function () {
-      mqttStub.publishLog.reset()
-      xbmq.whenXBeeMessageReceived(' ', null, null)
-      sinon.assert.calledOnce(mqttStub.publishLog)
+  describe('Xbmq#convertToFrame', () => {
+    it('throws if not a JSON string', () => {
+      expect(() => {
+        xbmq.convertToFrame('this is not JSON')
+      }).to.throw('Unexpected token')
     })
-
-    it('it calls mqtt.publishXBeeFrame();', function () {
-      mqttStub.publishXBeeFrame.reset()
-      xbmq.whenXBeeMessageReceived(null, 'topic', 'message')
-      sinon.assert.calledOnce(mqttStub.publishXBeeFrame)
+    it('adds commandParameter if missing', () => {
+      let message = '{}'
+      let frame = xbmq.convertToFrame(message)
+      expect(frame).to.have.property('commandParameter')
+      expect(frame.commandParameter).to.have.property('length', 0)
+      message = '{"commandParameter": ["one", "two"]}'
+      frame = xbmq.convertToFrame(message)
+      expect(frame.commandParameter).to.eql(['one', 'two'])
     })
-
-    it('does not call mqtt.publishXBeeFrame() on error', function () {
-      mqttStub.publishXBeeFrame.reset()
-      xbmq.whenXBeeMessageReceived(' ', 'topic', 'message')
-      sinon.assert.notCalled(mqttStub.publishXBeeFrame)
+    it('converts type strings to integers', () => {
+      let message = '{"type": "0xdeadbeef"}'
+      expect(xbmq.convertToFrame(message)).to.have.property('type', 0xdeadbeef)
+      message = '{"type": "deadbeef"}'
+      expect(xbmq.convertToFrame(message)).to.have.property('type').and.to.be.NaN
+      message = '{"type": 1234}'
+      expect(xbmq.convertToFrame(message)).to.have.property('type', 1234)
+      message = '{"type": "1234"}'
+      expect(xbmq.convertToFrame(message)).to.have.property('type', 1234)
+    })
+    it('converts id strings to integers', () => {
+      let message = '{"id": "0xdeadbeef"}'
+      expect(xbmq.convertToFrame(message)).to.have.property('id', 0xdeadbeef)
+      message = '{"id": "deadbeef"}'
+      expect(xbmq.convertToFrame(message)).to.have.property('id').and.to.be.NaN
+      message = '{"id": 1234}'
+      expect(xbmq.convertToFrame(message)).to.have.property('id', 1234)
+      message = '{"id": "1234"}'
+      expect(xbmq.convertToFrame(message)).to.have.property('id', 1234)
     })
   })
-
-  describe('whenMqttMessageReceived', function () {
-    it('it does not call mqtt.publishLog() on error', function () {
-      mqttStub.publishLog.reset()
-      xbmq.whenMqttMessageReceived(' ', null, null)
-      assert(!mqttStub.publishLog.called)
+  describe('Xbmq#onXBeeEvent', () => {
+    it('mqtt-publishes xbee errors', () => {
+      xbmq.onXBeeEvent(Error('test-error'))
+      expect(logger.called).to.be.true
     })
-
-    it('it calls xbee.transmitMqttMessage()', function () {
-      xbeeStub.transmitMqttMessage.reset()
-      xbmq.whenMqttMessageReceived(null, 'topic', 'message')
-      sinon.assert.calledOnce(xbeeStub.transmitMqttMessage)
+    it('mqtt-publishes XBee frames', () => {
+      xbmq.mqtt.publishXBeeFrame = sinon.stub()
+      xbmq.onXBeeEvent(null, 'frame')
+      expect(xbmq.mqtt.publishXBeeFrame.calledWith('frame')).to.be.true
     })
+  })
+  describe('Xbmq#onMqttEvent', () => {
+    it('logs errors', () => {
+      xbmq.onMqttEvent(Error('test-error'))
+      expect(logger.called).to.be.true
+    })
+    it('logs errors for unconvertable mqtt messages', () => {
+      xbmq.onMqttEvent(null, 'rootTopic', 'unconvertable-message')
+      expect(logger.calledWith('error', 'Unexpected token u in JSON at position 0')).to.be.true
+    })
+    it('logs XBee errors', () => {
+      xbmq.xbee.sendFrame = sinon.stub().throws(Error('xbee error'))
+      xbmq.onMqttEvent(null, 'rootTopic', '{"message": "valid"}')
+      expect(logger.calledWith('error', 'xbee error'))
+    })
+    it('xbee-transmits frames received via mqtt', () => {
 
-    it('does not call xbee.transmitMqttMessage() on error', function () {
-      xbeeStub.transmitMqttMessage.reset()
-      xbmq.whenMqttMessageReceived(' ', 'topic', 'message')
-      sinon.assert.notCalled(xbeeStub.transmitMqttMessage)
     })
   })
 })
