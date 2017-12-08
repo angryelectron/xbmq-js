@@ -81,7 +81,7 @@ describe('Mqtt', function () {
       let mqtt = new Mqtt(mockClient, 'rootTopic', () => {})
       let publishStub = sinon.stub(mqtt, 'publishOnlineStatus')
       mockClient.connected = true
-      mqtt.end()
+      mqtt.destroy()
       expect(publishStub.calledWith(false)).to.equal(true)
     })
     it('does not publish offline status if not connected', () => {
@@ -90,21 +90,21 @@ describe('Mqtt', function () {
       let mqtt = new Mqtt(mockClient, 'rootTopic', () => {})
       let publishStub = sinon.stub(mqtt, 'publishOnlineStatus')
       mockClient.connected = false
-      mqtt.end()
+      mqtt.destroy()
       expect(publishStub.called).to.equal(false)
     })
     it('closes the mqtt client', () => {
       let mockClient = new EventEmitter()
       mockClient.end = sinon.stub()
       let mqtt = new Mqtt(mockClient, 'rootTopic', () => {})
-      mqtt.end()
+      mqtt.destroy()
       expect(mockClient.end.called).to.equal(true)
     })
     it('calls messageCallback when closed', (done) => {
       let mockClient = new EventEmitter()
       mockClient.end = sinon.stub().yields()
       let mqtt = new Mqtt(mockClient, 'rootTopic', done)
-      mqtt.end()
+      mqtt.destroy()
     })
   })
   describe('Mqtt#publishOnlineStatus', () => {
