@@ -18,7 +18,7 @@ describe('XBee', () => {
     mockXBee = {
       parser: new MockXBeeParser(),
       builder: new Stream(),
-      nextFrameId: () => { this.id++ || 1 }
+      nextFrameId: () => { this.id = 1 }
     }
     mockSerial = new MockSerialPort('/dev/TEST')
     xbee = new XBee(mockSerial, mockXBee, () => {})
