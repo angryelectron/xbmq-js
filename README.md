@@ -6,7 +6,7 @@ possible, allowing it to run reliably and on low-power / embedded devices.
 
 Quick Start
 ------------
-Install xbmq via `npm install xbmq`. 
+Install xbmq via `npm install xbmq`.
 
 Configure the local XBee:
 
@@ -30,7 +30,7 @@ arguments.  The arguments and their default values are:
 * --loglevel info
 * --apiMode 2
 
-Alternatively, use a config file instead.  Copy or rename `config.json.sample` to 
+Alternatively, use a config file instead.  Copy or rename `config.json.sample` to
 `config.json`.  Note: Command-line arguments override config.json.
 
 
@@ -44,31 +44,38 @@ radio's 64-bit address will be used instead.
 ### Topic: rootTopic/gatewayIdentifier/online
 * _Message Type:_ String
 * _Message Value:_ "1" for online, "0" for offline
-* _Description:_ Messages are published to this topic by the gateway to 
+* _Description:_ Messages are published to this topic by the gateway to
   indicate the gateway's online status.  
 
 ### Topic: rootTopic/gatewayIdentifier/response
 * _Message Type:_ JSON
 * _Message Value:_ An [xbee-api](https://www.npmjs.com/package/xbee-api) frame
-* _Description:_ Messages from the XBee network are published to this topic. 
+* _Description:_ Messages from the XBee network are published to this topic.
 
 ### Topic: rootTopic/gatewayIdentifier/request
 * _Message Type:_ JSON
 * _Message Value:_ An [xbee-api](https://www.npmjs.com/package/xbee-api) frame
-* _Description:_ Mqtt clients can publish to this topic to issue commands to the 
-  XBee network.  Because JSON does not support hexadecimal numbers, `type` and 
-  `id` must be passed in decimal or as hedecimal strings (ie. 16, "0x10").  
-  Since many XBee commands don't require a commandParameter, it can be 
-  omitted from the message if desired.
+* _Description:_ Mqtt clients can publish to this topic to issue commands to the
+  XBee network.  
 
 ### Topic: rootTopic/gatewayIdentifier/log
 * _Message Type:_ JSON
 * _Message Value:_ Log messages.  Verbosity is controlled by `--loglevel`.
 * _Description:_ Similar to what appears in the local log file.
 
-Tips for Using with MQTT Clients
---------------------------------
-### MQTT module for NodeJS 
+### Messages
+xbee-api frames received from the XBee network will be converted to JSON and published
+to the broker, but there are a few shortcuts and things to keep in mind when
+building xbee-api frames to send via mqtt:
+
+* Hexadecimal values for `type` and `id` should be decimal numbers or hedecimal strings (ie. 16, "0x10"),
+* `commandParameter` is optional
+* See the [xbee-api]{@link https://www.npmjs.com/package/xbee-api} documentation
+  for more information about building and parsing frames.
+
+# Tips for Using with MQTT Clients
+
+### MQTT module for NodeJS
 * Call JSON.parse(message) on messages received from the `request` topic.
 * Call JSON.stringify(message) on XBee frame objects before publishing.
 
@@ -82,8 +89,8 @@ xbmq-js is intended to run on single board computers, OpenWrt routers,
 and other devices with limited resources that either can't access npm repositories,
 don't have native compilers, or just take forever to run `npm install`.
 
-This is why dependencies without native components have been bundled with the 
-application.  `serialport` is listed as an optional dependency because 
+This is why dependencies without native components have been bundled with the
+application.  `serialport` is listed as an optional dependency because
 installing it involves native compiling, which typically can't be done on these
 limited devices.
 
