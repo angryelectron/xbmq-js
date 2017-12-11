@@ -5,6 +5,7 @@
  */
 const xbmq = require('./lib/xbmq.js')
 const nconf = require('./lib/nconf.js')
+const logger = require('./lib/logger.js')
 
 const xbeeConfig = {
   apiMode: nconf.get('apiMode'),
@@ -21,7 +22,7 @@ const mqttConfig = {
   topic: nconf.get('rootTopic')
 }
 
-xbmq.create(xbeeConfig, mqttConfig).catch((err) => {
+xbmq.create(xbeeConfig, mqttConfig, logger).catch((err) => {
   console.log(err.message)
   process.exit(1)
 })

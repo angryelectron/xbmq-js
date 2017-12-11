@@ -21,7 +21,7 @@ describe('XBee', () => {
       nextFrameId: () => { this.id = 1 }
     }
     mockSerial = new MockSerialPort('/dev/TEST')
-    xbee = new XBee(mockSerial, mockXBee, () => {})
+    xbee = new XBee(mockSerial, mockXBee)
   })
 
   afterEach(() => {

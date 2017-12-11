@@ -58,11 +58,6 @@ radio's 64-bit address will be used instead.
 * _Description:_ Mqtt clients can publish to this topic to issue commands to the
   XBee network.  
 
-### Topic: rootTopic/gatewayIdentifier/log
-* _Message Type:_ JSON
-* _Message Value:_ Log messages.  Verbosity is controlled by `--loglevel`.
-* _Description:_ Similar to what appears in the local log file.
-
 ### Messages
 xbee-api frames received from the XBee network will be converted to JSON and published
 to the broker, but there are a few shortcuts and things to keep in mind when
@@ -96,7 +91,7 @@ limited devices.
 
 About
 -----
-* xbmq-js, copyright 2015-2016 Andrew Bythell, [abythell@ieee.org](mailto:abythell@ieee.org)
+* xbmq-js, copyright 2015-2017 Andrew Bythell, [abythell@ieee.org](mailto:abythell@ieee.org)
 * http://github.com/angryelectron/xbmq-js
 
 xbmq is free software: you can redistribute it and/or modify it under the terms

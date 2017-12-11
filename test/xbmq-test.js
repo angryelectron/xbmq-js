@@ -6,17 +6,44 @@ const chaiAsPromised = require('chai-as-promised')
 const sinon = require('sinon')
 chai.use(chaiAsPromised)
 const expect = chai.expect
-
+const EventEmitter = require('events')
 const Xbmq = require('../lib/xbmq.js')
 
 describe('Xbmq', () => {
-  let xbmq, logger
+  let xbmq, mockLogger, mockXBee, mockMqtt
   beforeEach(() => {
-    logger = sinon.stub()
-    xbmq = new Xbmq({}, {}, logger)
+    mockLogger = sinon.stub()
+    mockXBee = new EventEmitter()
+    mockMqtt = new EventEmitter()
+    xbmq = new Xbmq(mockXBee, mockMqtt, mockLogger)
   })
-  afterEach(() => {
-    logger.reset()
+  describe('Xbmq#constructor', () => {
+    it('handles mqtt messages', () => {
+      let handlerStub = sinon.stub(xbmq, 'onMqttEvent')
+      mockMqtt.emit('mqtt-msg', 'rootTopic', 'mqtt test')
+      expect(handlerStub.calledWith(null, 'rootTopic', 'mqtt test')).to.be.true
+    })
+    it('handles mqtt errors', () => {
+      let handlerStub = sinon.stub(xbmq, 'onMqttEvent')
+      let error = Error('test-error')
+      mockMqtt.emit('error', error)
+      expect(handlerStub.calledWith(error)).to.be.true
+    })
+    it('handles mqtt debug messages', () => {
+      mockMqtt.emit('debug', 'mqtt test')
+      expect(mockLogger.calledWith('debug', 'mqtt test')).to.be.true
+    })
+    it('handles xbee messages', () => {
+      let handlerStub = sinon.stub(xbmq, 'onXBeeEvent')
+      mockXBee.emit('xbee-msg', 'test-frame')
+      expect(handlerStub.calledWith(null, 'test-frame')).to.be.true
+    })
+    it('handles xbee errors', () => {
+      let handlerStub = sinon.stub(xbmq, 'onXBeeEvent')
+      let error = Error('xbee-error')
+      mockXBee.emit('error', error)
+      expect(handlerStub.calledWith(error)).to.be.true
+    })
   })
   describe('Xbmq#convertToFrame', () => {
     it('throws if not a JSON string', () => {
@@ -57,7 +84,7 @@ describe('Xbmq', () => {
   describe('Xbmq#onXBeeEvent', () => {
     it('mqtt-publishes xbee errors', () => {
       xbmq.onXBeeEvent(Error('test-error'))
-      expect(logger.called).to.be.true
+      expect(mockLogger.called).to.be.true
     })
     it('mqtt-publishes XBee frames', () => {
       xbmq.mqtt.publishXBeeFrame = sinon.stub()
@@ -68,16 +95,16 @@ describe('Xbmq', () => {
   describe('Xbmq#onMqttEvent', () => {
     it('logs errors', () => {
       xbmq.onMqttEvent(Error('test-error'))
-      expect(logger.called).to.be.true
+      expect(mockLogger.called).to.be.true
     })
     it('logs errors for unconvertable mqtt messages', () => {
       xbmq.onMqttEvent(null, 'rootTopic', 'unconvertable-message')
-      expect(logger.calledWith('error', 'Unexpected token u in JSON at position 0')).to.be.true
+      expect(mockLogger.calledWith('error', 'Unexpected token u in JSON at position 0')).to.be.true
     })
     it('logs XBee errors', () => {
       xbmq.xbee.sendFrame = sinon.stub().throws(Error('xbee error'))
       xbmq.onMqttEvent(null, 'rootTopic', '{"message": "valid"}')
-      expect(logger.calledWith('error', 'xbee error'))
+      expect(mockLogger.calledWith('error', 'xbee error'))
     })
     it('xbee-transmits frames received via mqtt', () => {
 
