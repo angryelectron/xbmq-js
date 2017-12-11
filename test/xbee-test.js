@@ -30,20 +30,19 @@ describe('XBee', () => {
   })
 
   describe('XBee#constructor', () => {
-    it('calls callback with Error on XBee error', function (done) {
-      xbee.callback = (error, message) => {
+    it('emits event with Error on XBee error', function (done) {
+      xbee.on('error', (error) => {
         expect(error).to.be.instanceof(Error)
         expect(error).to.have.property('message', 'test')
         done()
-      }
+      })
       xbee.xbeeAPI.parser.emit('error', Error('test'))
     })
-    it('calls messageCallback with XBee frame', (done) => {
-      xbee.callback = (error, frame) => {
-        expect(error).to.equal(null)
+    it('emits xbee-msg event on XBee frame', (done) => {
+      xbee.on('xbee-msg', (frame) => {
         expect(frame).to.equal('test-frame')
         done()
-      }
+      })
       xbee.xbeeAPI.parser.emit('data', 'test-frame')
     })
   })
@@ -67,16 +66,6 @@ describe('XBee', () => {
     it('rejects if apiMode is invalid', () => {
       config.apiMode = 'invalid'
       return expect(XBee.create(config)).to.eventually.be.rejectedWith('Invalid API mode')
-    })
-    it('rejects if callback is invalid', () => {
-      config.callback = 'invalid'
-      return expect(XBee.create(config)).to.eventually.be.rejectedWith('missing callback').then(() => {
-        config.callback = () => {}
-        return expect(XBee.create(config)).to.eventually.be.rejectedWith('missing callback')
-      }).then(() => {
-        config.callback = (a) => {}
-        return expect(XBee.create(config)).to.eventually.be.rejectedWith('missing callback')
-      })
     })
     it('throws if serial port is already open', () => {
       // beforeEach has already opened the port - try and open it again
