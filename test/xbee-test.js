@@ -1,150 +1,169 @@
-var expect = require('chai').expect;
-var mockery = require('mockery');
-var events = require('events');
-var sinon = require('sinon');
-var xbee;
+/* eslint-env mocha */
 
-/**
- * A mock serialport class.
- */
-var serialportmock = {
-    SerialPort: function (port, options) {
-        var eventEmitter = new events.EventEmitter();
-        var sp = this;
-        sp.port = port;
-        sp.close = function (callback) {
-            callback();
-        };
-        sp.on = eventEmitter.on;
-        sp.emit = eventEmitter.emit;
-        sp.write = function () {};
+const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
+const sinon = require('sinon')
+chai.use(chaiAsPromised)
+const expect = chai.expect
 
-        /*
-         * If the port name is 'bad', emit 'error' when this constructor
-         * is called.  Otherwise, emit 'open'.
-         */
-        setTimeout(function () {
-            sp.emit(port === 'bad' ? 'error' : 'open', "An error occured");
-        }, 1000);
+const XBee = require('../lib/xbee.js')
+const MockSerialPort = require('serialport/test')
+const MockXBeeParser = require('events')
+const Stream = require('stream').Transform
+
+describe('XBee', () => {
+  let xbee, mockXBee, mockSerial
+  beforeEach(() => {
+    MockSerialPort.Binding.createPort('/dev/TEST')
+    mockXBee = {
+      parser: new MockXBeeParser(),
+      builder: new Stream(),
+      nextFrameId: () => { this.id = 1 }
     }
-};
+    mockSerial = new MockSerialPort('/dev/TEST')
+    xbee = new XBee(mockSerial, mockXBee)
+  })
 
-describe('xbee.js', function () {
+  afterEach(() => {
+    xbee.destroy()
+    MockSerialPort.Binding.reset()
+  })
 
-    var port = '/doesnt/matter';
-    var baud = 9600;
-    var apiMode = 2;
+  describe('XBee#constructor', () => {
+    it('emits event with Error on XBee error', function (done) {
+      xbee.on('error', (error) => {
+        expect(error).to.be.instanceof(Error)
+        expect(error).to.have.property('message', 'test')
+        done()
+      })
+      xbee.xbeeAPI.parser.emit('error', Error('test'))
+    })
+    it('emits xbee-msg event on XBee frame', (done) => {
+      xbee.on('xbee-msg', (frame) => {
+        expect(frame).to.equal('test-frame')
+        done()
+      })
+      xbee.xbeeAPI.parser.emit('data', 'test-frame')
+    })
+  })
+  describe('XBee#create', () => {
+    let config
+    beforeEach(() => {
+      config = {
+        apiMode: 2,
+        port: '/dev/TEST',
+        baud: 9600,
+        callback: (e, f) => {}
+      }
+    })
+    it('rejects if arguments are missing', () => {
+      return expect(XBee.create()).to.eventually.be.rejectedWith('Bad or missing arguments')
+    })
+    it('rejects if baud is invalid', () => {
+      config.baud = 'invalid'
+      return expect(XBee.create(config)).to.eventually.be.rejectedWith('"baudRate" must be a number')
+    })
+    it('rejects if apiMode is invalid', () => {
+      config.apiMode = 'invalid'
+      return expect(XBee.create(config)).to.eventually.be.rejectedWith('Invalid API mode')
+    })
+    it('throws if serial port is already open', () => {
+      // beforeEach has already opened the port - try and open it again
+      return expect(XBee.create(config)).to.eventually.be.rejectedWith('Port is locked cannot open')
+    })
+  })
 
-    var serialportspy;
-    before(function () {
-        mockery.enable({
-            warnOnUnregistered: false,
-            warnOnReplace: false
-        });
-        serialportspy = sinon.spy(serialportmock, 'SerialPort');
-        mockery.registerMock('serialport', serialportmock);
-        xbee = require('../xbee');
-    });
-    after(function () {
-        mockery.disable();
-        serialportspy.reset();
-    });
+  describe('XBee#sendFrame', () => {
+    it('throws on frame write error', () => {
+      var badFrame = 'bad'
+      xbee.xbeeAPI.builder.write = sinon.stub().throws(Error('send-error'))
+      expect(() => {
+        xbee.sendFrame(badFrame)
+      }).to.throw('send-error')
+    })
+    it('should accept valid xbee-api frames', () => {
+      xbee.xbeeAPI.builder.write = sinon.stub()
+      var standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}'
+      var typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}'
+      var idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}'
+      var noCP = '{"type":9, "id":1, "command":"BD"}'
+      expect(() => {
+        xbee.sendFrame(standardFrame)
+        xbee.sendFrame(typeHex)
+        xbee.sendFrame(idHex)
+        xbee.sendFrame(noCP)
+      }).to.not.throw()
+    })
+  })
 
-    describe('begin tests', function () {
+  describe('XBee#sendAndReceiveFrame', () => {
+    it('should reject if frame is invalid', () => {
+      xbee.xbeeAPI.builder.write = sinon.stub().throws()
+      return expect(xbee.sendAndReceiveFrame({type: 'invalid'}, 1)).to.eventually.be.rejected
+    })
 
-        it('should throw if port is invalid', function () {
-            expect(function () {
-                xbee.begin();
-            }).to.throw(TypeError);
-        });
-        
-        it('should throw if baud is invalid', function () {
-            expect(function () {
-                xbee.begin(port, null);
-            }).to.throw(TypeError);
-        });
-        
-        it('should throw if apiMode is invalid', function () {
-            expect(function () {
-                xbee.begin(port, baud, 0);
-            }).to.throw(TypeError);
-            expect(function () {
-                xbee.begin(port, baud, 3);
-            }).to.throw(TypeError);
-        });
-        
-        it('should throw if callbacks are invalid', function () {
-            expect(function () {
-                xbee.begin(port, baud, apiMode, null);
-            }).to.throw(TypeError);
-            expect(function () {
-                xbee.begin(port, baud, apiMode, function (arg1, arg2) {});
-            }).to.throw(TypeError);
-        });
+    it('resolves with a response', () => {
+      const testFrame = {
+        type: 0x08,
+        command: 'ID',
+        commandParameter: []
+      }
+      // keep track of event listeners and handlers
+      let addSpy = sinon.spy(xbee.xbeeAPI.parser, 'on')
+      let removeSpy = sinon.spy(xbee.xbeeAPI.parser, 'removeListener')
+      // short circuit the serial port pipe
+      xbee.xbeeAPI.builder.write = sinon.stub().callsFake(() => {
+        xbee.xbeeAPI.parser.emit('data', testFrame)
+      })
+      return xbee.sendAndReceiveFrame(testFrame, 1000).then((responseFrame) => {
+        expect(responseFrame).to.eql(testFrame)
+        // ensure any added listeners are removed
+        expect(addSpy.calledOnce).to.equal(true)
+        expect(removeSpy.calledOnce).to.equal(true)
+        expect(addSpy.calledWith('data'))
+      })
+    })
 
-        it('should open the serial port', function (done) {
-            var message = function (error, frame) {
-                expect(error).to.be.null;
-            };
-            xbee.begin(port, baud, apiMode, function () {
-                expect(serialportspy.called).to.be.ok;
-                xbee.end(done);
-            }, message);
-        });                
+    it('should reject on timeout', () => {
+      var testFrame = {
+        type: 0x08,
+        command: 'ID',
+        commandParameter: []
+      }
+      xbee.xbeeAPI.builder.write = sinon.stub()
+      // since write is stubbed there will be no data event
+      return expect(xbee.sendAndReceiveFrame(testFrame, 10)).to.eventually.be.rejectedWith('Timeout waiting for XBee')
+    })
+  })
 
-        it('should call messageCallback on error', function (done) {
-            var ready = function () {};
-            var message = function (error, frame) {
-                expect(error).to.be.ok;
-                done();
-            };
-            xbee.begin('bad', baud, apiMode, ready, message);
-        });
-    });
+  describe('XBee#getLocalAddress()', () => {
+    it('should resolve with an address string', () => {
+      let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame')
+        .onFirstCall().resolves({commandData: '1234'})
+        .onSecondCall().resolves({commandData: 'ABCD'})
+      return xbee.getLocalAddress().then((addr) => {
+        expect(transmitStub.callCount).to.equal(2)
+        expect(addr).to.equal('1234ABCD')
+      })
+    })
+    it('reject on error', () => {
+      sinon.stub(xbee, 'sendAndReceiveFrame').rejects(Error('test'))
+      return expect(xbee.getLocalAddress()).to.eventually.be.rejectedWith('test')
+    })
+  })
 
-    describe('transmitMqttMessage tests', function () {
+  describe('XBee#getLocalNI()', () => {
+    it('should resolve with a node-identifier string', () => {
+      let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame').resolves({commandData: 'NI'})
+      return xbee.getLocalNI().then((ni) => {
+        expect(transmitStub.called).to.equal(true)
+        expect(ni).to.equal('NI')
+      })
+    })
 
-        var testFrame = {
-            type: 0x09,
-            id: 0x01,
-            command: 'ID',
-            commandParameter: []
-        };
-
-        it('should throw if message is not valid JSON', function (done) {
-            var ready = function () {
-                expect(function () {
-                    xbee.transmitMqttMessage('not-json');
-                }).to.throw(SyntaxError);
-
-                expect(function () {
-                    xbee.transmitMqttMessage('{"hex not allowed":0x09}');
-                }).to.throw(Error);
-
-                done();
-            };
-            var message = function (a, b) {};
-            xbee.begin(port, baud, apiMode, ready, message);
-        });
-
-        it('should accept valid xbee-api frames', function (done) {
-            
-            var standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}';
-            var typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}';
-            var idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}';
-            var noCP = '{"type":9, "id":1, "command":"BD"}';
-            
-            var ready = function () {
-                xbee.transmitMqttMessage(standardFrame);
-                xbee.transmitMqttMessage(typeHex);
-                xbee.transmitMqttMessage(idHex);
-                xbee.transmitMqttMessage(noCP);
-                done();
-            };
-            var message = function (a, b) {};
-            xbee.begin(port, baud, apiMode, ready, message);
-        });
-
-    });
-});
-
+    it('should reject on error', () => {
+      sinon.stub(xbee, 'sendAndReceiveFrame').rejects(Error('test'))
+      return expect(xbee.getLocalNI()).to.eventually.be.rejectedWith('test')
+    })
+  })
+})

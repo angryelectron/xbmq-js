@@ -1,166 +1,198 @@
-var mqtt = require('../mqtt');
-var expect = require('chai').expect;
+/* eslint-env mocha */
+const Mqtt = require('../lib/mqtt.js')
+const expect = require('chai').expect
+const sinon = require('sinon')
+const EventEmitter = require('events')
 
-describe('mqtt.js', function () {
+describe('Mqtt', function () {
+  describe('Mqtt#constructor', () => {
+    it('throws if arguments are missing', () => {
+      expect(() => {
+        new Mqtt() // eslint-disable-line no-new
+      }).to.throw(TypeError)
+      expect(() => {
+        new Mqtt('mqtt') // eslint-disable-line no-new
+      }).to.throw(TypeError)
+      expect(() => {
+        new Mqtt('mqtt', 'rootTopic') // eslint-disable-line no-new
+      }).to.throw(TypeError)
+    })
+    it('creates event listeners', () => {
+      let mockClient = {
+        on: sinon.stub()
+      }
+      new Mqtt(mockClient, 'rootTopic') // eslint-disable-line no-new
+      expect(mockClient.on.callCount).to.equal(6)
+      expect(mockClient.on.calledWith('connect'))
+      expect(mockClient.on.calledWith('error'))
+      expect(mockClient.on.calledWith('message'))
+    })
+    it('publishes online status on connect', () => {
+      let mockClient = new EventEmitter()
+      mockClient.subscribe = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      let publishStub = sinon.stub(mqtt, 'publishOnlineStatus')
+      mockClient.emit('connect', {sessionPresent: true})
+      expect(publishStub.called).to.equal(true)
+    })
+    it('subscribes to request topic on connect', () => {
+      let mockClient = new EventEmitter()
+      mockClient.subscribe = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      sinon.stub(mqtt, 'publishOnlineStatus')
+      mockClient.emit('connect', {sessionPresent: false})
+      expect(mockClient.subscribe.called).to.equal(true)
+    })
+    it('does not subscribe to request topic on reconnect', () => {
+      let mockClient = new EventEmitter()
+      mockClient.subscribe = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      sinon.stub(mqtt, 'publishOnlineStatus')
+      mockClient.emit('connect', {sessionPresent: true})
+      expect(mockClient.subscribe.called).to.equal(false)
+    })
+    it('emits event on error', (done) => {
+      let mockClient = new EventEmitter()
+      mockClient.subscribe = sinon.stub().yields(Error('test'))
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.on('error', (error) => {
+        expect(error).to.be.instanceof(Error)
+        done()
+      })
+      mockClient.emit('error', Error('error-event'))
+    })
+    it('emits event on incoming message', (done) => {
+      let mockClient = new EventEmitter()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.on('mqtt-msg', (topic, message) => {
+        expect(topic).to.equal('topic')
+        expect(message).to.equal('message')
+        done()
+      })
+      mockClient.emit('message', 'topic', 'message')
+    })
+  })
+  describe('Mqtt#destroy', () => {
+    it('publishes offline status if connected', () => {
+      let mockClient = new EventEmitter()
+      mockClient.end = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      let publishStub = sinon.stub(mqtt, 'publishOnlineStatus')
+      mockClient.connected = true
+      mqtt.destroy()
+      expect(publishStub.calledWith(false)).to.equal(true)
+    })
+    it('does not publish offline status if not connected', () => {
+      let mockClient = new EventEmitter()
+      mockClient.end = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      let publishStub = sinon.stub(mqtt, 'publishOnlineStatus')
+      mockClient.connected = false
+      mqtt.destroy()
+      expect(publishStub.called).to.equal(false)
+    })
+    it('closes the mqtt client', () => {
+      let mockClient = new EventEmitter()
+      mockClient.end = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.destroy()
+      expect(mockClient.end.called).to.equal(true)
+    })
+  })
+  describe('Mqtt#publishOnlineStatus', () => {
+    it('publishes 0 to rootTopic/online when false', () => {
+      let mockClient = new EventEmitter()
+      mockClient.publish = sinon.stub().yields()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.publishOnlineStatus(false)
+      expect(mockClient.publish.calledWith('rootTopic/online', '0')).to.equal(true)
+    })
+    it('publishes 1 to rootTopic/online when true', () => {
+      let mockClient = new EventEmitter()
+      mockClient.publish = sinon.stub().yields()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.publishOnlineStatus(true)
+      expect(mockClient.publish.calledWith('rootTopic/online', '1')).to.equal(true)
+    })
+    it('emits event on error', (done) => {
+      let mockClient = new EventEmitter()
+      mockClient.publish = sinon.stub().yields(Error('publish error'))
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.on('error', (err) => {
+        expect(err).to.be.instanceof(Error)
+        expect(err).to.have.property('message', 'publish error')
+        done()
+      })
+      mqtt.publishOnlineStatus(true)
+    })
+  })
+  describe('Mqtt#publishXBeeFrame', () => {
+    it('emits error if not connected', (done) => {
+      let mockClient = new EventEmitter()
+      mockClient.connected = false
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.on('error', (err) => {
+        expect(err).to.be.instanceof(ReferenceError)
+        done()
+      })
+      mqtt.publishXBeeFrame({})
+    })
+    it('does not publish empty frames', () => {
+      let mockClient = new EventEmitter()
+      mockClient.connected = true
+      mockClient.publish = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic', () => {})
+      mqtt.publishXBeeFrame()
+      expect(mockClient.publish.called).to.equal(false)
+    })
+    it('publishes a message to response topic', () => {
+      let mockClient = new EventEmitter()
+      mockClient.connected = true
+      mockClient.publish = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic', () => {})
+      mqtt.publishXBeeFrame('testFrame')
+      expect(mockClient.publish.calledWith('rootTopic/response', '"testFrame"')).to.equal(true)
+    })
+    it('emits error if publishing fails', (done) => {
+      let mockClient = new EventEmitter()
+      mockClient.connected = true
+      mockClient.publish = sinon.stub().yields(Error('test-error'))
+      let mqtt = new Mqtt(mockClient, 'rootTopic', done)
+      mqtt.on('error', (err) => {
+        expect(err).to.be.instanceof(Error)
+        done()
+      })
+      mqtt.publishXBeeFrame('testFrame')
+    })
+  })
+  describe('Mqtt#publishLog', () => {
+    it('emits error if not connected', (done) => {
+      let mockClient = new EventEmitter()
+      mockClient.connected = false
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.on('error', (err) => {
+        expect(err).to.be.instanceOf(ReferenceError)
+        done()
+      })
+      mqtt.publishLog('test')
+    })
+    it('only publishes strings or Errors', () => {
+      let mockClient = new EventEmitter()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      expect(() => {
+        mqtt.publishLog(999)
+      }).to.throw(TypeError)
+    })
+    it('publishes to the logTopic', () => {
+      let mockClient = new EventEmitter()
+      mockClient.connected = true
+      mockClient.publish = sinon.stub()
+      let mqtt = new Mqtt(mockClient, 'rootTopic')
+      mqtt.publishLog('test')
+      expect(mockClient.publish.calledWith('rootTopic/log', 'test')).to.equal(true)
+    })
+    it('calls messageCallback if publishing fails', () => {
 
-    var broker = 'mqtt://test.mosquitto.org';   /* public MQTT broker */
-    var rootTopic = 'sdf987sdlk3jdjd';          /* random string */
-    var Mqtt = require('mqtt');
-
-    describe('begin tests', function () {
-
-        var onlineTopic = rootTopic + '/online';
-
-        it('should fail if rootTopic not given', function () {
-            expect(function () {
-                mqtt.begin(broker, null);
-            }).to.throw(ReferenceError);
-            mqtt.end();
-        });
-
-        it('should fail if broker not given', function () {
-            expect(function () {
-                mqtt.begin(null, rootTopic);
-            }).to.throw(ReferenceError);
-            mqtt.end();
-        });
-
-        it('should publish "1" to `online` topic', function (done) {
-            var mqttClient = Mqtt.connect(broker);
-
-            mqttClient.on('connect', function () {
-                mqttClient.on('message', function (topic, message, packet) {
-                    if (!packet.retain) {
-                        expect(message.toString()).to.equal('1');
-
-                        /* Unsubscribe to ignore subsequent messages. */
-                        mqttClient.unsubscribe(onlineTopic);
-
-                        mqtt.end(function () {
-                            mqttClient.end(true, done);
-                        });
-                    }
-                });
-                mqttClient.subscribe(onlineTopic);
-                mqtt.begin(broker, rootTopic, null, null);
-            });
-        });
-
-    });
-
-    describe('end tests', function () {
-
-        var onlineTopic = rootTopic + '/online';
-
-        it('should close the MQTT client connection', function (done) {
-            mqtt.begin(broker, rootTopic, null, function () {
-                mqtt.end(done);
-            });
-        });
-
-        it('should not complain if begin() not called first', function () {
-            mqtt.end();
-        });
-
-        it('should publish "0" to online status topic', function (done) {
-            var mqttClient = Mqtt.connect(broker);
-            mqttClient.on('connect', function () {
-                mqtt.begin(broker, rootTopic, null, function () {
-                    mqttClient.on('message', function (topic, message, packet) {
-                        if (!packet.retain) {
-                            expect(message.toString()).to.equal('0');
-                        }
-                    });
-                    mqttClient.subscribe(onlineTopic);
-                    mqtt.end();
-                    setTimeout(function () {
-                        mqttClient.end(true, done);
-                    }, 1000);
-                });
-            });
-        });
-    });
-
-    describe('publishXBeeFrame tests', function () {
-
-        var responseTopic = rootTopic + '/response';
-        var testFrame = {
-            remote64: '1234'
-        };
-
-        it('should fail if MQTT not connected', function () {
-            expect(function () {
-                mqtt.publishXBeeFrame(testFrame);
-            }).to.throw(ReferenceError);
-
-        });
-        
-    });
-
-    describe('publishLog tests', function () {
-
-        this.timeout(5000);
-        var logTopic = rootTopic + '/log';
-
-        it('should fail if begin() not called', function () {
-            expect(function () {
-                mqtt.publishLog('test message');
-            }).to.throw(ReferenceError);
-
-        });
-
-        it('should fail if message is incorrect type', function (done) {
-            mqtt.begin(broker, rootTopic, null, function () {
-                expect(function () {
-                    mqtt.publishLog(null);
-                }).to.throw(TypeError);
-                mqtt.end(done);
-            });
-
-        });
-
-        it('should publish Errors as string to rootTopic/gateway/log', function (done) {
-            var mqttClient = Mqtt.connect(broker);
-            var error = new Error("Error message.");
-
-            mqttClient.on('connect', function () {
-                mqttClient.subscribe(logTopic);
-                mqtt.begin(broker, rootTopic, null, function () {
-                    mqtt.publishLog(error);
-                });
-            });
-
-            mqttClient.on('message', function (t, m) {
-                expect(t).to.equal(logTopic);
-                expect(m.toString()).to.equal(error.message);
-                mqtt.end(function () {
-                    mqttClient.end(true, done);
-                });
-            });
-        });
-
-        it('should publish strings to rootTopic/gateway/log', function (done) {
-            var mqttClient = Mqtt.connect(broker);
-            var error = "Error message.";
-
-            mqttClient.on('connect', function () {
-                mqttClient.subscribe(logTopic);
-                mqtt.begin(broker, rootTopic, null, function () {
-                    mqtt.publishLog(error);
-                });
-            });
-
-            mqttClient.on('message', function (t, m) {
-                expect(t).to.equal(logTopic);
-                expect(m.toString()).to.equal(error);
-                mqtt.end(function () {
-                    mqttClient.end(true, done);
-                });
-            });
-        });
-
-    });
-
-});
-
-
+    })
+  })
+})
