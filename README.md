@@ -65,7 +65,7 @@ building xbee-api frames to send via mqtt:
 
 * Hexadecimal values for `type` and `id` should be decimal numbers or hedecimal strings (ie. 16, "0x10"),
 * `commandParameter` is optional
-* See the [xbee-api]{@link https://www.npmjs.com/package/xbee-api} documentation
+* See the [xbee-api](https://www.npmjs.com/package/xbee-api) documentation
   for more information about building and parsing frames.
 
 # Tips for Using with MQTT Clients
