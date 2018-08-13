@@ -4,6 +4,9 @@ XBee to MQTT Gateway
 XBee networks through MQTT messages and aims to do as little processing as
 possible, allowing it to run reliably and on low-power / embedded devices.
 
+`xbmq` does _not_ enable MQTT messages to be sent through an XBee network.  Instead, 
+it enables XBee API frames to be sent and received by MQTT clients.
+
 Quick Start
 ------------
 Install xbmq via `npm install xbmq`.
