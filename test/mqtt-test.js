@@ -32,7 +32,7 @@ describe('Mqtt', function () {
       mockClient.subscribe = sinon.stub()
       let mqtt = new Mqtt(mockClient, 'rootTopic')
       let publishStub = sinon.stub(mqtt, 'publishOnlineStatus')
-      mockClient.emit('connect', {sessionPresent: true})
+      mockClient.emit('connect', { sessionPresent: true })
       expect(publishStub.called).to.equal(true)
     })
     it('subscribes to request topic on connect', () => {
@@ -40,7 +40,7 @@ describe('Mqtt', function () {
       mockClient.subscribe = sinon.stub()
       let mqtt = new Mqtt(mockClient, 'rootTopic')
       sinon.stub(mqtt, 'publishOnlineStatus')
-      mockClient.emit('connect', {sessionPresent: false})
+      mockClient.emit('connect', { sessionPresent: false })
       expect(mockClient.subscribe.called).to.equal(true)
     })
     it('does not subscribe to request topic on reconnect', () => {
@@ -48,7 +48,7 @@ describe('Mqtt', function () {
       mockClient.subscribe = sinon.stub()
       let mqtt = new Mqtt(mockClient, 'rootTopic')
       sinon.stub(mqtt, 'publishOnlineStatus')
-      mockClient.emit('connect', {sessionPresent: true})
+      mockClient.emit('connect', { sessionPresent: true })
       expect(mockClient.subscribe.called).to.equal(false)
     })
     it('emits event on error', (done) => {

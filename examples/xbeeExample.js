@@ -21,7 +21,7 @@ XBee.create(xbeeConfig).then((instance) => {
   return xbee.getLocalAddress()
 }).then((addr) => {
   console.log(addr)
-   // now get the local node-identifier
+  // now get the local node-identifier
   return xbee.getLocalNI()
 }).then((ni) => {
   console.log(ni)

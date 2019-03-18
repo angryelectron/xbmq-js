@@ -99,7 +99,7 @@ describe('XBee', () => {
   describe('XBee#sendAndReceiveFrame', () => {
     it('should reject if frame is invalid', () => {
       xbee.xbeeAPI.builder.write = sinon.stub().throws()
-      return expect(xbee.sendAndReceiveFrame({type: 'invalid'}, 1)).to.eventually.be.rejected
+      return expect(xbee.sendAndReceiveFrame({ type: 'invalid' }, 1)).to.eventually.be.rejected
     })
 
     it('resolves with a response', () => {
@@ -139,8 +139,8 @@ describe('XBee', () => {
   describe('XBee#getLocalAddress()', () => {
     it('should resolve with an address string', () => {
       let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame')
-        .onFirstCall().resolves({commandData: '1234'})
-        .onSecondCall().resolves({commandData: 'ABCD'})
+        .onFirstCall().resolves({ commandData: '1234' })
+        .onSecondCall().resolves({ commandData: 'ABCD' })
       return xbee.getLocalAddress().then((addr) => {
         expect(transmitStub.callCount).to.equal(2)
         expect(addr).to.equal('1234ABCD')
@@ -154,7 +154,7 @@ describe('XBee', () => {
 
   describe('XBee#getLocalNI()', () => {
     it('should resolve with a node-identifier string', () => {
-      let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame').resolves({commandData: 'NI'})
+      let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame').resolves({ commandData: 'NI' })
       return xbee.getLocalNI().then((ni) => {
         expect(transmitStub.called).to.equal(true)
         expect(ni).to.equal('NI')
