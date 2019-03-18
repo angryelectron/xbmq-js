@@ -1,15 +1,15 @@
 XBee to MQTT Gateway
 ====================
-`xbmq` is a NodeJs XBee-to-MQTT gateway.  It allows two-way communication with
+`xbmq` is a NodeJs XBee-over-MQTT gateway.  It allows two-way communication with
 XBee networks through MQTT messages and aims to do as little processing as
 possible, allowing it to run reliably and on low-power / embedded devices.
 
-`xbmq` does _not_ enable MQTT messages to be sent through an XBee network.  Instead, 
+`xbmq` does _not_ enable MQTT messages to be sent through an XBee network.  Instead,
 it enables XBee API frames to be sent and received by MQTT clients.
 
 Quick Start
 ------------
-Install xbmq via `npm install xbmq`.
+Install xbmq via `npm install xbmq` or `npm install -g xbmq`.
 
 Configure the local XBee:
 
@@ -33,9 +33,11 @@ arguments.  The arguments and their default values are:
 * --loglevel info
 * --apiMode 2
 
-Alternatively, use a config file instead.  Copy or rename `config.json.sample` to
-`config.json`.  Note: Command-line arguments override config.json.
+Then start the gateway with `xbmq <options>` (for global install).  Alternatively,
+if installed locally (vs. globally), you can use a config file. Copy or rename
+`config.json.sample` to `config.json` and lauch using `./xbmq.js` (or via pm2).
 
+Note: Command-line arguments override config.json.
 
 Operation
 ---------

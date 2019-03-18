@@ -1,6 +1,8 @@
+#!/usr/bin/env node
+
 /**
  * XBee to MQTT Gateway
- * @copyright 2015-2017
+ * @copyright 2015-2019
  * @author Andrew Bythell <abythell@ieee.org>
  */
 const xbmq = require('./lib/xbmq.js')

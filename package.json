@@ -3,7 +3,15 @@
   "description": "XBee to MQTT gateway",
   "version": "2.0.0",
   "preferGlobal": true,
-  "bin": "./xbmq.js",
+  "bin": {
+    "xbmq": "./xbmq.js"
+  },
+  "files": [
+    "/lib",    
+    "/xbmq.js",
+    "/config.json.sample"
+
+  ],
   "keywords": [
     "xbee",
     "mqtt",
