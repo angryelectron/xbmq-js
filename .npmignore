@@ -1,8 +1,0 @@
-.npmignore
-.gitignore
-nbproject
-*.tgz
-test
-package
-*.log
-config.json
