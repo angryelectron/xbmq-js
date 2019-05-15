@@ -29,7 +29,7 @@
   "dependencies": {
     "mqtt": "^2.15.0",
     "nconf": "^0.10.0",
-    "winston": "^2.4.4",
+    "winston": "^3.2.1",
     "xbee-api": "^0.6.0"
   },
   "bundledDependencies": [
@@ -53,10 +53,10 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
-    "jsdoc": "^3.5.5",
-    "mocha": "^6.0.2",
-    "opn-cli": "^4.0.0",
-    "sinon": "^7.2.7",
+    "jsdoc": "^3.6.2",
+    "mocha": "^6.1.4",
+    "opn-cli": "^5.0.0",
+    "sinon": "^7.3.2",
     "standard": "^12.0.1"
   }
 }
