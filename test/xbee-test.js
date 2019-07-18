@@ -109,8 +109,8 @@ describe('XBee', () => {
         commandParameter: []
       }
       // keep track of event listeners and handlers
-      let addSpy = sinon.spy(xbee.xbeeAPI.parser, 'on')
-      let removeSpy = sinon.spy(xbee.xbeeAPI.parser, 'removeListener')
+      const addSpy = sinon.spy(xbee.xbeeAPI.parser, 'on')
+      const removeSpy = sinon.spy(xbee.xbeeAPI.parser, 'removeListener')
       // short circuit the serial port pipe
       xbee.xbeeAPI.builder.write = sinon.stub().callsFake(() => {
         xbee.xbeeAPI.parser.emit('data', testFrame)
@@ -138,7 +138,7 @@ describe('XBee', () => {
 
   describe('XBee#getLocalAddress()', () => {
     it('should resolve with an address string', () => {
-      let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame')
+      const transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame')
         .onFirstCall().resolves({ commandData: '1234' })
         .onSecondCall().resolves({ commandData: 'ABCD' })
       return xbee.getLocalAddress().then((addr) => {
@@ -154,7 +154,7 @@ describe('XBee', () => {
 
   describe('XBee#getLocalNI()', () => {
     it('should resolve with a node-identifier string', () => {
-      let transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame').resolves({ commandData: 'NI' })
+      const transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame').resolves({ commandData: 'NI' })
       return xbee.getLocalNI().then((ni) => {
         expect(transmitStub.called).to.equal(true)
         expect(ni).to.equal('NI')

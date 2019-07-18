@@ -27,7 +27,7 @@ XBee.create(xbeeConfig).then((instance) => {
   console.log(ni)
   // build an xbee-api frame for a local AT command.  See the xbee-api
   // project for details on building frames
-  let frame = {
+  const frame = {
     type: 0x08,
     command: 'ID',
     commandParameter: []
@@ -39,7 +39,7 @@ XBee.create(xbeeConfig).then((instance) => {
   // ID commandData response is a buffer
   console.log(id.commandData.toString('hex'))
   // now create a node-discovery request
-  let frame = {
+  const frame = {
     type: 0x08,
     command: 'ND',
     commandParameter: []

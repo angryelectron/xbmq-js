@@ -19,13 +19,13 @@ describe('Xbmq', () => {
   })
   describe('Xbmq#constructor', () => {
     it('handles mqtt messages', () => {
-      let handlerStub = sinon.stub(xbmq, 'onMqttEvent')
+      const handlerStub = sinon.stub(xbmq, 'onMqttEvent')
       mockMqtt.emit('mqtt-msg', 'rootTopic', 'mqtt test')
       expect(handlerStub.calledWith(null, 'rootTopic', 'mqtt test')).to.be.true
     })
     it('handles mqtt errors', () => {
-      let handlerStub = sinon.stub(xbmq, 'onMqttEvent')
-      let error = Error('test-error')
+      const handlerStub = sinon.stub(xbmq, 'onMqttEvent')
+      const error = Error('test-error')
       mockMqtt.emit('error', error)
       expect(handlerStub.calledWith(error)).to.be.true
     })
@@ -34,13 +34,13 @@ describe('Xbmq', () => {
       expect(mockLogger.calledWith('debug', 'mqtt test')).to.be.true
     })
     it('handles xbee messages', () => {
-      let handlerStub = sinon.stub(xbmq, 'onXBeeEvent')
+      const handlerStub = sinon.stub(xbmq, 'onXBeeEvent')
       mockXBee.emit('xbee-msg', 'test-frame')
       expect(handlerStub.calledWith(null, 'test-frame')).to.be.true
     })
     it('handles xbee errors', () => {
-      let handlerStub = sinon.stub(xbmq, 'onXBeeEvent')
-      let error = Error('xbee-error')
+      const handlerStub = sinon.stub(xbmq, 'onXBeeEvent')
+      const error = Error('xbee-error')
       mockXBee.emit('error', error)
       expect(handlerStub.calledWith(error)).to.be.true
     })
