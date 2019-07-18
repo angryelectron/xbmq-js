@@ -27,7 +27,7 @@
   },
   "license": "GPL-3.0",
   "dependencies": {
-    "mqtt": "^2.15.0",
+    "mqtt": "^3.0.0",
     "nconf": "^0.10.0",
     "winston": "^3.2.1",
     "xbee-api": "^0.6.0"
@@ -53,10 +53,10 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
-    "jsdoc": "^3.6.2",
-    "mocha": "^6.1.4",
+    "jsdoc": "^3.6.3",
+    "mocha": "^6.2.0",
     "opn-cli": "^5.0.0",
     "sinon": "^7.3.2",
-    "standard": "^12.0.1"
+    "standard": "^13.0.2"
   }
 }
