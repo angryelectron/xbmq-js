@@ -75,7 +75,7 @@ describe('XBee', () => {
 
   describe('XBee#sendFrame', () => {
     it('throws on frame write error', () => {
-      var badFrame = 'bad'
+      const badFrame = 'bad'
       xbee.xbeeAPI.builder.write = sinon.stub().throws(Error('send-error'))
       expect(() => {
         xbee.sendFrame(badFrame)
@@ -83,10 +83,10 @@ describe('XBee', () => {
     })
     it('should accept valid xbee-api frames', () => {
       xbee.xbeeAPI.builder.write = sinon.stub()
-      var standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}'
-      var typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}'
-      var idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}'
-      var noCP = '{"type":9, "id":1, "command":"BD"}'
+      const standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}'
+      const typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}'
+      const idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}'
+      const noCP = '{"type":9, "id":1, "command":"BD"}'
       expect(() => {
         xbee.sendFrame(standardFrame)
         xbee.sendFrame(typeHex)
@@ -125,7 +125,7 @@ describe('XBee', () => {
     })
 
     it('should reject on timeout', () => {
-      var testFrame = {
+      const testFrame = {
         type: 0x08,
         command: 'ID',
         commandParameter: []
