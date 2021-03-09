@@ -94,6 +94,18 @@ application.  `serialport` is listed as an optional dependency because
 installing it involves native compiling, which typically can't be done on these
 limited devices.
 
+Troubleshooting
+---
+Confirm your mqtt settings by connecting to the broker using another tool, like mosquitto_sub, and subscribing to all topics:
+
+```
+mosqsuitto_sub -v -h <broker> -u <username> -P <password> -t '<rootTopic>/#'
+```
+
+Then start xbmq with the same MQTT settings.  Once xbmq has connected successfully to the broker, you should see the value 1 be published to `<rootTopic>/<XBee NI name>/online`.  Stopping xbmq will publish 0.
+
+Use another XBee on the network to transmit some data, like an IOSample.  You should see an xbee-api frame published to `<rootTopic>/<XBee NI name>/response`
+
 About
 -----
 * xbmq-js, copyright 2015-2017 Andrew Bythell, [abythell@ieee.org](mailto:abythell@ieee.org)
