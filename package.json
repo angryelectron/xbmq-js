@@ -53,8 +53,8 @@
   "devDependencies": {
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
-    "jsdoc": "^3.6.6",
-    "mocha": "^8.3.2",
+    "jsdoc": "^3.6.7",
+    "mocha": "^8.4.0",
     "opn-cli": "^5.0.0",
     "sinon": "^10.0.0",
     "standard": "^16.0.3"
