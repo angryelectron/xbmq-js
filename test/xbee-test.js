@@ -7,26 +7,27 @@ chai.use(chaiAsPromised)
 const expect = chai.expect
 
 const XBee = require('../lib/xbee.js')
-const MockSerialPort = require('serialport/test')
+const { SerialPortMock } = require('serialport')
 const MockXBeeParser = require('events')
 const Stream = require('stream').Transform
 
 describe('XBee', () => {
   let xbee, mockXBee, mockSerial
   beforeEach(() => {
-    MockSerialPort.Binding.createPort('/dev/TEST')
+    const path = '/dev/TEST'
+    SerialPortMock.binding.createPort(path)
     mockXBee = {
       parser: new MockXBeeParser(),
       builder: new Stream(),
       nextFrameId: () => { this.id = 1 }
     }
-    mockSerial = new MockSerialPort('/dev/TEST')
+    mockSerial = new SerialPortMock({ path, baudRate: 9600 })
     xbee = new XBee(mockSerial, mockXBee)
   })
 
   afterEach(() => {
     xbee.destroy()
-    MockSerialPort.Binding.reset()
+    SerialPortMock.binding.reset()
   })
 
   describe('XBee#constructor', () => {
@@ -67,9 +68,9 @@ describe('XBee', () => {
       config.apiMode = 'invalid'
       return expect(XBee.create(config)).to.eventually.be.rejectedWith('Invalid API mode')
     })
-    it('throws if serial port is already open', () => {
+    it('rejects if serial port is already open', () => {
       // beforeEach has already opened the port - try and open it again
-      return expect(XBee.create(config)).to.eventually.be.rejectedWith('Port is locked cannot open')
+      return expect(XBee.create(config)).to.eventually.be.rejectedWith('Unknown error code')
     })
   })
 
