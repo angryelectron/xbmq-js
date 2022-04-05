@@ -46,7 +46,7 @@
     "test": "mocha",
     "pretest": "standard",
     "jsdoc": "jsdoc lib -r -R README.md -d doc",
-    "doc": "npm run jsdoc && opn doc/index.html",
+    "doc": "npm run jsdoc && open-cli doc/index.html",
     "preversion": "npm test && npm run jsdoc",
     "postversion": "git push && git push --tags"
   },
@@ -54,9 +54,15 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "jsdoc": "^3.6.7",
-    "mocha": "^8.4.0",
-    "opn-cli": "^5.0.0",
-    "sinon": "^10.0.0",
+    "mocha": "^9.2.2",
+    "open-cli": "^7.0.1",
+    "sinon": "^13.0.1",
     "standard": "^16.0.3"
-  }
+  },
+  "bundleDependencies": [
+    "mqtt",
+    "winston",
+    "xbee-api",
+    "nconf"
+  ]
 }
