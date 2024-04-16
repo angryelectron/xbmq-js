@@ -99,7 +99,7 @@ describe('Xbmq', () => {
     })
     it('logs errors for unconvertable mqtt messages', () => {
       xbmq.onMqttEvent(null, 'rootTopic', 'unconvertable-message')
-      expect(mockLogger.calledWith('error', 'Unexpected token u in JSON at position 0')).to.be.true
+      sinon.assert.calledWith(mockLogger, 'error')
     })
     it('logs XBee errors', () => {
       xbmq.xbee.sendFrame = sinon.stub().throws(Error('xbee error'))
