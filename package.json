@@ -27,7 +27,7 @@
   },
   "license": "GPL-3.0",
   "dependencies": {
-    "mqtt": "^4.2.6",
+    "mqtt": "^5.5.2",
     "nconf": "^0.12.0",
     "winston": "^3.3.3",
     "xbee-api": "^0.6.0"
@@ -39,11 +39,11 @@
     "nconf"
   ],
   "optionalDependencies": {
-    "serialport": "^10.4.0"
+    "serialport": "^12.0.0"
   },
   "scripts": {
     "start": "node xbmq.js",
-    "test": "mocha",
+    "test": "jest",
     "pretest": "standard",
     "jsdoc": "jsdoc lib -r -R README.md -d doc",
     "doc": "npm run jsdoc && open-cli doc/index.html",
@@ -51,13 +51,15 @@
     "postversion": "git push && git push --tags"
   },
   "devDependencies": {
-    "chai": "^4.3.4",
-    "chai-as-promised": "^7.1.1",
+    "jest": "^29.7.0",
     "jsdoc": "^4.0.0",
-    "mocha": "^10.1.0",
     "open-cli": "^8.0.0",
-    "sinon": "^17.0.1",
     "standard": "^17.0.0"
+  },
+  "jest": {
+    "testMatch": [
+      "**/test/**.js"
+    ]
   },
   "bundleDependencies": [
     "mqtt",
