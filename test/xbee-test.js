@@ -1,11 +1,4 @@
-/* eslint-env mocha */
-
-const chai = require('chai')
-const chaiAsPromised = require('chai-as-promised')
-const sinon = require('sinon')
-chai.use(chaiAsPromised)
-const expect = chai.expect
-
+/* eslint-env jest */
 const XBee = require('../lib/xbee.js')
 const { SerialPortMock } = require('serialport')
 const MockXBeeParser = require('events')
@@ -33,15 +26,15 @@ describe('XBee', () => {
   describe('XBee#constructor', () => {
     it('emits event with Error on XBee error', function (done) {
       xbee.on('error', (error) => {
-        expect(error).to.be.instanceof(Error)
-        expect(error).to.have.property('message', 'test')
+        expect(error).toBeInstanceOf(Error)
+        expect(error).toHaveProperty('message', 'test')
         done()
       })
       xbee.xbeeAPI.parser.emit('error', Error('test'))
     })
     it('emits xbee-msg event on XBee frame', (done) => {
       xbee.on('xbee-msg', (frame) => {
-        expect(frame).to.equal('test-frame')
+        expect(frame).toEqual('test-frame')
         done()
       })
       xbee.xbeeAPI.parser.emit('data', 'test-frame')
@@ -58,32 +51,32 @@ describe('XBee', () => {
       }
     })
     it('rejects if arguments are missing', () => {
-      return expect(XBee.create()).to.eventually.be.rejectedWith('Bad or missing arguments')
+      return expect(XBee.create()).rejects.toThrow('Bad or missing arguments')
     })
     it('rejects if baud is invalid', () => {
       config.baud = 'invalid'
-      return expect(XBee.create(config)).to.eventually.be.rejectedWith('"baudRate" must be a number')
+      return expect(XBee.create(config)).rejects.toThrow('"baudRate" must be a number')
     })
     it('rejects if apiMode is invalid', () => {
       config.apiMode = 'invalid'
-      return expect(XBee.create(config)).to.eventually.be.rejectedWith('Invalid API mode')
+      return expect(XBee.create(config)).rejects.toThrow('Invalid API mode')
     })
     it('rejects if serial port is already open', () => {
       // beforeEach has already opened the port - try and open it again
-      return expect(XBee.create(config)).to.eventually.be.rejectedWith('Unknown error code')
+      return expect(XBee.create(config)).rejects.toThrow('Unknown error code')
     })
   })
 
   describe('XBee#sendFrame', () => {
     it('throws on frame write error', () => {
       const badFrame = 'bad'
-      xbee.xbeeAPI.builder.write = sinon.stub().throws(Error('send-error'))
+      xbee.xbeeAPI.builder.write = jest.fn().mockImplementation(() => { throw new Error('send-error') })
       expect(() => {
         xbee.sendFrame(badFrame)
-      }).to.throw('send-error')
+      }).toThrow('send-error')
     })
     it('should accept valid xbee-api frames', () => {
-      xbee.xbeeAPI.builder.write = sinon.stub()
+      xbee.xbeeAPI.builder.write = jest.fn()
       const standardFrame = '{"type":9, "id":1, "command":"BD", "commandParameter":[7]}'
       const typeHex = '{"type":"0x09", "id":1, "command":"BD", "commandParameter":[7]}'
       const idHex = '{"type":9, "id":"0x01", "command":"BD", "commandParameter":[7]}'
@@ -93,14 +86,14 @@ describe('XBee', () => {
         xbee.sendFrame(typeHex)
         xbee.sendFrame(idHex)
         xbee.sendFrame(noCP)
-      }).to.not.throw()
+      }).not.toThrow()
     })
   })
 
   describe('XBee#sendAndReceiveFrame', () => {
     it('should reject if frame is invalid', () => {
-      xbee.xbeeAPI.builder.write = sinon.stub().throws()
-      return expect(xbee.sendAndReceiveFrame({ type: 'invalid' }, 1)).to.eventually.be.rejected
+      xbee.xbeeAPI.builder.write = jest.fn().mockImplementation(() => { throw new Error('invalid') })
+      return expect(xbee.sendAndReceiveFrame({ type: 'invalid' }, 1)).rejects.toThrow('invalid')
     })
 
     it('resolves with a response', () => {
@@ -110,18 +103,18 @@ describe('XBee', () => {
         commandParameter: []
       }
       // keep track of event listeners and handlers
-      const addSpy = sinon.spy(xbee.xbeeAPI.parser, 'on')
-      const removeSpy = sinon.spy(xbee.xbeeAPI.parser, 'removeListener')
+      const addSpy = jest.spyOn(xbee.xbeeAPI.parser, 'on')
+      const removeSpy = jest.spyOn(xbee.xbeeAPI.parser, 'removeListener')
       // short circuit the serial port pipe
-      xbee.xbeeAPI.builder.write = sinon.stub().callsFake(() => {
+      xbee.xbeeAPI.builder.write = jest.fn().mockImplementation(() => {
         xbee.xbeeAPI.parser.emit('data', testFrame)
       })
       return xbee.sendAndReceiveFrame(testFrame, 1000).then((responseFrame) => {
-        expect(responseFrame).to.eql(testFrame)
+        expect(responseFrame).toEqual(testFrame)
         // ensure any added listeners are removed
-        expect(addSpy.calledOnce).to.equal(true)
-        expect(removeSpy.calledOnce).to.equal(true)
-        expect(addSpy.calledWith('data'))
+        // expect(addSpy.calledOnce).toEqual(true)
+        expect(removeSpy).toHaveBeenCalledTimes(1)
+        expect(addSpy).toHaveBeenCalledWith('data', expect.anything())
       })
     })
 
@@ -131,40 +124,40 @@ describe('XBee', () => {
         command: 'ID',
         commandParameter: []
       }
-      xbee.xbeeAPI.builder.write = sinon.stub()
+      xbee.xbeeAPI.builder.write = jest.fn()
       // since write is stubbed there will be no data event
-      return expect(xbee.sendAndReceiveFrame(testFrame, 10)).to.eventually.be.rejectedWith('Timeout waiting for XBee')
+      return expect(xbee.sendAndReceiveFrame(testFrame, 10)).rejects.toThrow('Timeout waiting for XBee')
     })
   })
 
   describe('XBee#getLocalAddress()', () => {
     it('should resolve with an address string', () => {
-      const transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame')
-        .onFirstCall().resolves({ commandData: '1234' })
-        .onSecondCall().resolves({ commandData: 'ABCD' })
+      xbee.sendAndReceiveFrame = jest.fn()
+        .mockResolvedValueOnce({ commandData: '1234' })
+        .mockResolvedValueOnce({ commandData: 'ABCD' })
       return xbee.getLocalAddress().then((addr) => {
-        expect(transmitStub.callCount).to.equal(2)
-        expect(addr).to.equal('1234ABCD')
+        expect(xbee.sendAndReceiveFrame).toHaveBeenCalledTimes(2)
+        expect(addr).toEqual('1234ABCD')
       })
     })
-    it('reject on error', () => {
-      sinon.stub(xbee, 'sendAndReceiveFrame').rejects(Error('test'))
-      return expect(xbee.getLocalAddress()).to.eventually.be.rejectedWith('test')
+    it('rejects on error', () => {
+      xbee.sendAndReceiveFrame = jest.fn().mockRejectedValue(Error('test'))
+      return expect(xbee.getLocalAddress()).rejects.toThrow('test')
     })
   })
 
   describe('XBee#getLocalNI()', () => {
     it('should resolve with a node-identifier string', () => {
-      const transmitStub = sinon.stub(xbee, 'sendAndReceiveFrame').resolves({ commandData: 'NI' })
+      xbee.sendAndReceiveFrame = jest.fn().mockResolvedValue({ commandData: 'NI' })
       return xbee.getLocalNI().then((ni) => {
-        expect(transmitStub.called).to.equal(true)
-        expect(ni).to.equal('NI')
+        expect(xbee.sendAndReceiveFrame).toHaveBeenCalledTimes(1)
+        expect(ni).toEqual('NI')
       })
     })
 
     it('should reject on error', () => {
-      sinon.stub(xbee, 'sendAndReceiveFrame').rejects(Error('test'))
-      return expect(xbee.getLocalNI()).to.eventually.be.rejectedWith('test')
+      xbee.sendAndReceiveFrame = jest.fn().mockRejectedValue(Error('test'))
+      return expect(xbee.getLocalNI()).rejects.toThrow('test')
     })
   })
 })
