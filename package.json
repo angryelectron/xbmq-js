@@ -3,7 +3,7 @@
   "description": "XBee to MQTT gateway",
   "version": "2.1.2",
   "bin": {
-    "xbmq": "./xbmq.js"
+    "xbmq": "xbmq.js"
   },
   "keywords": [
     "xbee",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "angryelectron/xbmq-js"
+    "url": "git+https://github.com/angryelectron/xbmq-js.git"
   },
   "license": "GPL-3.0",
   "dependencies": {
